@@ -14,20 +14,22 @@
 #define ATLAS_TEMPERATURE_COMAND "T,"
 #define ATLAS_TEMPERATURE_READ_COMAND "T,?"
 
-
 class AtlasStampTemperatureCompensated : public AtlasStamp
 {
 public:
-	explicit AtlasStampTemperatureCompensated (byte);
-	char* info(void);
-	//TODO: Guardar localmente la ultima temperatura recuperada/fijada
-	//que no tengamos que preguntarle al stamp cada vez
+	//CONS/DES
+	explicit AtlasStampTemperatureCompensated (uint8_t, char*, uint8_t, float, float, uint8_t = 1);
+	
+	//BASE
+	char* const info(void);
+
+	//Temperature API	
 	bool set_temperature(float);
 	bool set_temperature(float,float);
 	float get_temperature(bool=false);
-protected:
-	float _get_temperature(void);
-	float _current_temperature;
+private:
+	float _get_temperature(void); //Actual read from stamp module
+	float _current_temperature; //Local cached temperature value
 };
 
 #endif

@@ -3,67 +3,29 @@
 // 
 
 #include "AtlasStampPH.h"
+//AtlasStamp(address, unit, unit_len, min_value, max_value, num_fields_in_response)
+//
+AtlasStampPh::AtlasStampPh(uint8_t address) :
+	AtlasStampTemperatureCompensated(address, "PH", 2, 0.001f, 14.000f, 1)
 
-AtlasStampPh::AtlasStampPh(byte address) : AtlasStampTemperatureCompensated(address)
 {
-	min_value(0.001f);
-	max_value(14.000f);
-	unit("PH");
 }
 
-bool AtlasStampPh::begin()
+bool const AtlasStampPh::begin()
 {
 	//Inicialzamos el sensor
 	if (_stampReady())
 	{
-		//Fijamos la recuperamos la temperatura actual
-		_get_temperature();
+		//Force initial reading of stored temperature value
+		get_temperature(true);
 		return true;
 	}
 	return false;
 	
 }
 
-float AtlasStampPh::read()
-{
-	byte commandResult = _command(ATLAS_READ_COMAND, 1000);
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
-	{
-		return _parseResult();
-	}
-	//TODO: Afinar codigos de respuesta :)
-	return -2048.0f;
-}
 
-bool AtlasStampPh::readAsync()
-{
-	return _command_async(ATLAS_READ_COMAND, 1000);
-}
-
-float AtlasStampPh::resultAsync()
-{
-	byte commandResult = _command_result();
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
-	{
-		return _parseResult();
-	}
-	//TODO: Afinar codigos de respuesta :)
-	return -2048.0f;
-}
-
-float AtlasStampPh::_parseResult()
-{
-	//Tenemos los datos en el buffer :)
-	//Teoricamente el comando READ debe responder con 
-	//una trama del tipo 1,PH,NULL, 1 es el estado, que no
-	//se almacena en el buffer y null es el final de comando
-	//que tampoco se guarda, asi que ahora el buffer deberia tener un float en string
-	//asi que hacemos
-	return atof(_getBuffer());
-}
-
-
-bool AtlasStampPh::_stampReady()
+bool const AtlasStampPh::_stampReady()
 {
 	bool isReady = false;
 	//El padre controla que este coenctado un dispositivo en la direccion

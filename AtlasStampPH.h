@@ -19,15 +19,18 @@
 class AtlasStampPh : public AtlasStampTemperatureCompensated
 {
 public:
-	explicit AtlasStampPh(byte);
-	float read(void);
+	//CONS/DES
+	explicit AtlasStampPh(uint8_t);
+	
+	//BASE
+	bool const begin(void);
+
+	//PH
 	float* slope(void);
-	bool readAsync(void);
-	float resultAsync(void);
-	bool begin(void);
+
+
 private:
-	bool _stampReady(void);
-	float _parseResult(void);
+	bool const _stampReady(void);
 };
 
 #endif

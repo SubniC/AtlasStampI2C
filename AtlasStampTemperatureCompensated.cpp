@@ -1,15 +1,15 @@
 #include "AtlasStampTemperatureCompensated.h"
 
-AtlasStampTemperatureCompensated::AtlasStampTemperatureCompensated(byte address) :
-	AtlasStamp(address), _current_temperature(-2048.0)
+AtlasStampTemperatureCompensated::AtlasStampTemperatureCompensated(uint8_t address, char* unit, uint8_t unit_len, float min_value, float max_value, uint8_t num_fields_in_response) :
+	AtlasStamp(address, unit, unit_len, min_value, max_value, num_fields_in_response), _current_temperature(-2048.0)
 {
 
 }
 
 
-char* AtlasStampTemperatureCompensated::info()
+char* const AtlasStampTemperatureCompensated::info()
 {
-	sprintf(_infoBuffer, "ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f]",_address, stamp_version, ready(), busy(), min_value(), max_value(), unit(), get_temperature(false),_vcc());
+	sprintf(_infoBuffer, "ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f]",_address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(false), get_vcc());
 	return _infoBuffer;
 }
 
@@ -80,14 +80,13 @@ bool AtlasStampTemperatureCompensated::set_temperature(float temp)
 	if(!busy())
 	{
 		char buffer[7] = { 0 };
-		//Guardamos el numero en el buffer
 		sprintf(buffer, "T,%4.2f", temp);
 
 		//Generamos el comando
 		byte commandResult = _command(buffer, 300);
 		
-		//Serial1.printf("CMD[%s] RES[%d]\n", buffer, commandResult);
-		
+		//TODO: Query the temperature to validate the change?
+
 		if (commandResult)
 		{
 			_current_temperature = temp;
