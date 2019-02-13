@@ -24,11 +24,12 @@ public:
 	char* const info(void);
 
 	//Temperature API	
-	bool set_temperature(float);
-	bool set_temperature(float,float);
-	float get_temperature(bool=false);
+	bool const set_temperature(float);
+	bool const set_temperature(float,float);
+	float const get_temperature();
+protected:
+	bool const _get_temperature(void); //Actual read from stamp module
 private:
-	float _get_temperature(void); //Actual read from stamp module
 	float _current_temperature; //Local cached temperature value
 };
 

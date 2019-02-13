@@ -15,7 +15,7 @@
 	#define ATLAS_DEBUG_PH
 #endif
 
-
+//TODO: Falta emtodo info()
 class AtlasStampPh : public AtlasStampTemperatureCompensated
 {
 public:
