@@ -18,10 +18,10 @@ AtlasStamp::AtlasStamp(uint8_t address, char* unit, uint8_t unit_len, float min_
 	_clean_buffer();
 }
 
-uint8_t AtlasStamp::raw_command(char* cmd, unsigned long timeout)
-{
-	return _raw_command(cmd, timeout);
-}
+//uint8_t AtlasStamp::raw_command(char* cmd, unsigned long timeout)
+//{
+//	return _raw_command(cmd, timeout);
+//}
 
 void AtlasStamp::_clean_buffer()
 {
@@ -32,9 +32,6 @@ void AtlasStamp::_clean_buffer()
 	_i2c_bytes_received = 0;
 }
 
-/// <summary>
-/// DEPRECATED
-/// </summary>
 void AtlasStamp::_clean_wire()
 {
 	while (Wire.available()) { Wire.read(); }
@@ -44,7 +41,7 @@ void AtlasStamp::_clean_wire()
 /// Inicia un comando asincrono
 /// </summary>
 /// <param name="cmd">Comando a enviar</param>
-/// <param name="t">Tiempo que requiere elk Atlas para procesarlo</param>
+/// <param name="t">Tiempo que requiere el Atlas para procesarlo</param>
 /// <returns>True en caso de exito, False en caso contrario</returns>
 bool AtlasStamp::_command_async(char* cmd, unsigned long t)
 {
@@ -162,10 +159,6 @@ uint8_t AtlasStamp::_command_result()
 
 uint8_t AtlasStamp::_command(char* cmd, unsigned long t)
 {
-
-#ifdef ATLAS_DEBUG
-	Serial.printf("AtlasStamp::_command() [START] T:[%d]\n", millis());
-#endif
 	//Si el STAMP no esta listo,
 	//devolvemos NULO
 	if (!_is_init)
@@ -176,6 +169,10 @@ uint8_t AtlasStamp::_command(char* cmd, unsigned long t)
 	{
 		return ATLAS_BUSY_RESPONSE;
 	}
+
+#ifdef ATLAS_DEBUG
+	Serial.printf("AtlasStamp::_command() [START] CMD[%s] T:[%d]\n", cmd, millis());
+#endif
 
 	return _raw_command(cmd, t);
 }
@@ -250,18 +247,18 @@ uint8_t AtlasStamp::_raw_command(char* cmd, unsigned long t)
 	//Tenemos que limpiar los datos del buffer antes de volver a usar el bus
 	_clean_wire();
 #ifdef ATLAS_DEBUG
-	Serial.printf("AtlasStamp::_raw_command() [END] T[%d]  BYTESREC [%d] CODE [%d] RESPONSE [%s]\n", millis(), _i2c_bytes_received, _i2c_response_code, _response_buffer);
+	//Serial.printf("AtlasStamp::_raw_command() [END] T[%d]  BYTESREC [%d] CODE [%d] RESPONSE [%s]\n", millis(), _i2c_bytes_received, _i2c_response_code, _response_buffer);
 	Serial.printf("AtlasStamp::_raw_command() [END] BUSY[%d] CMD[%s] BYTESREC[%d] CODE[%d] RESPONSE[%s]\n", busy(), cmd, _i2c_bytes_received, _i2c_response_code, _response_buffer);
 #endif
 	//Devolvemos el codigo de respuesta :)
-	//Si es 1 tendremos _response_buffer cargado con la respuesta al comando
+	//Si es 1 tendremos _response_buffer cargado con la respuesta del comando
 	return _i2c_response_code;
 }
 
-void AtlasStamp::raw_response(char* localBuffer)
-{
-	strcpy(localBuffer, _response_buffer);
-}
+//void AtlasStamp::raw_response(char* localBuffer)
+//{
+//	strcpy(localBuffer, _response_buffer);
+//}
 
 char AtlasStamp::_read_buffer(byte pos)
 {

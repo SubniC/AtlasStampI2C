@@ -21,6 +21,7 @@
 
 //TODO: Falta optimizar las funciones antiguas de set/get_k
 
+//DATASHEET: https://www.atlas-scientific.com/_files/_datasheets/_circuit/ec_EZO_datasheet.pdf
 class AtlasStampEc : public AtlasStampTemperatureCompensated
 {
 public:

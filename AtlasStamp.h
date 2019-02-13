@@ -45,17 +45,8 @@
 #define ATLAS_INFO_COMAND "I"
 #define ATLAS_READ_COMAND "R"
 
-//TODO: para el parseo de las respuestas separadas por comas http://www.cplusplus.com/reference/cstdio/sscanf/
-//TODO: metodos virtuales puros y eficiencia en sistemas embebidos http://chipkit.net/efficient-cplus-plus/
 
-/**
- * @class	AtlasStamp
- *
- * @brief	
- *
- * @author	Mdps
- * @date	20/01/2017
- */
+//TODO: terminar de implementar API de arlas
 class AtlasStamp
 {
 public:
@@ -92,13 +83,12 @@ public:
 	void purge(); //Cleans the internal object buffers and state to READY
 
 	//DEBUG METHOS SHOULD NOT BE USED IN PRODUCCTION CODE
-	uint8_t raw_command(char*, unsigned long);
-	void raw_response(char*);
+	//uint8_t raw_command(char*, unsigned long);
+	//void raw_response(char*);
 
 	//Virtual methods, not using pure virtual here to optimize program memory with pic32 compiler
 	//more here: http://chipkit.net/efficient-cplus-plus/
 	//http://www.learncpp.com/cpp-tutorial/126-pure-virtual-functions-abstract-base-classes-and-interface-classes/
-	
 	virtual bool const begin(void) { while (1); }
 	
 	float* const read(void);
@@ -107,28 +97,16 @@ public:
 
 	inline uint8_t const response_count(void) const { return _response_field_count; }
 
-//#ifdef ATLAS_DEBUG
-//	inline void set_debug_stream(Stream& ds) {
-//		_debug_stream = ds
-//	}
-//#endif
-
 protected:
-
-//#ifdef ATLAS_DEBUG
-//	Stream& _debug_stream;
-//#endif
-
-	float* const _parse_sensor_read(void);
 	virtual bool const _stamp_ready(void) { while (1); };
+	float* const _parse_sensor_read(void);
+	
+	char _command_buffer[32];
 
-
-	char _command_buffer[16];
+	//TODO: no es necesario, hacer otra cosa
 	char _infoBuffer[256]; //Necesario?
+	void _ready(bool); //Fija el valor de _is_init, NECESARIO?
 
-	uint8_t _address;
-	char stamp_version[5];
-	void _ready(bool); //Fija el valor de _is_init
 	char* _get_response_buffer();
 	char _read_buffer(uint8_t);
 	void _clean_buffer(void);
@@ -136,12 +114,11 @@ protected:
 	uint8_t _command(char *, unsigned long);
 	uint8_t _raw_command(char *, unsigned long);
 	bool _stamp_connected(void);
+
+	uint8_t _address;
+	char stamp_version[5];
 	uint8_t _response_field_count;
 
-
-	//void max_value(float);
-	//void min_value(float);
-	//void unit(char*);
 	/*
 	Commandos asincronos
 	*/
@@ -162,6 +139,7 @@ private:
 	float _max_value;
 	float _min_value;
 	unsigned long _async_comand_ready_by;
+	
 	void _clean_wire(void);
 
 };
