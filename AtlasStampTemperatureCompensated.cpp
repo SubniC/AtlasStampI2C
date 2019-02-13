@@ -15,7 +15,7 @@ char* const AtlasStampTemperatureCompensated::info()
 
 float AtlasStampTemperatureCompensated::get_temperature(bool force)
 {
-	//Serial1.println("DEBUG float AtlasStampTemperatureCompensated::temperature(bool force)");
+	//Serial.println("DEBUG float AtlasStampTemperatureCompensated::temperature(bool force)");
 	if (force)
 	{
 		return _get_temperature();
@@ -28,7 +28,7 @@ float AtlasStampTemperatureCompensated::get_temperature(bool force)
 
 float AtlasStampTemperatureCompensated::_get_temperature()
 {
-	//Serial1.println("DEBUG float AtlasStampTemperatureCompensated::_temperature()");
+	//Serial.println("DEBUG float AtlasStampTemperatureCompensated::_temperature()");
 
 	byte commandResult = _command(ATLAS_TEMPERATURE_READ_COMAND, 300);
 	if (ATLAS_SUCCESS_RESPONSE == commandResult)
@@ -56,7 +56,7 @@ float AtlasStampTemperatureCompensated::_get_temperature()
 		//Despues del bucle debemos tener en tmpTemperature la cadena con el 
 		//numero para pasarselo a ATOF
 #ifdef ATLAS_DEBUG
-		Serial1.printf("AtlasStampTemperatureCompensated::temperature buffer [%s] global buffer [%s]\n", tmpBuffer, _getBuffer());
+		Serial.printf("AtlasStampTemperatureCompensated::temperature buffer [%s] global buffer [%s]\n", tmpBuffer, _getBuffer());
 #endif
 		_current_temperature = atof(tmpBuffer);
 	}
@@ -67,7 +67,7 @@ float AtlasStampTemperatureCompensated::_get_temperature()
 
 bool AtlasStampTemperatureCompensated::set_temperature(float temp, float max_divergence)
 {
-	//Serial1.printf("temp[%4.2f] _current_temperature[%4.2f] max_divergence[%4.2f]\n", temp, _current_temperature, max_divergence);
+	//Serial.printf("temp[%4.2f] _current_temperature[%4.2f] max_divergence[%4.2f]\n", temp, _current_temperature, max_divergence);
 	if ((!busy()) && (abs(temp - _current_temperature) >= max_divergence))
 	{
 		return set_temperature(temp);

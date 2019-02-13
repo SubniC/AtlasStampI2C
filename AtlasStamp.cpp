@@ -35,7 +35,7 @@ void AtlasStamp::_clean_buffer()
 /// <summary>
 /// DEPRECATED
 /// </summary>
-void AtlasStamp::_cleanWire()
+void AtlasStamp::_clean_wire()
 {
 	while (Wire.available()) { Wire.read(); }
 }
@@ -70,7 +70,7 @@ bool AtlasStamp::_command_async(char* cmd, unsigned long t)
 		_async_comand_ready_by = millis() + t;
 
 #ifdef ATLAS_DEBUG
-		Serial1.printf("AtlasStamp::_command_async() [END] T:[%d] BUSY [%d] TIMEOUT [%d] RESPONSE [%d] COMMAND [%s]\n", millis(), _is_busy, _async_comand_ready_by, wireres, cmd);
+		Serial.printf("AtlasStamp::_command_async() [END] T:[%d] BUSY [%d] TIMEOUT [%d] RESPONSE [%d] COMMAND [%s]\n", millis(), _is_busy, _async_comand_ready_by, wireres, cmd);
 #endif
 
 		return true;
@@ -112,7 +112,7 @@ uint8_t AtlasStamp::_command_result()
 		{
 			//Esto es necesario si no queremos que se cuelgue el i2c
 			//Tenemos que limpiar los datos del buffer antes de volver a usar el bus
-			_cleanWire();
+			_clean_wire();
 		}
 		delay(CONNECTION_DELAY_MS);
 	}
@@ -145,13 +145,13 @@ uint8_t AtlasStamp::_command_result()
 			}
 		}
 	}
-	_cleanWire();
+	_clean_wire();
 	//Volvemos a poner los flags en su sitio
 	_is_busy = false;
 	_async_comand_ready_by = 0;
 
 #ifdef ATLAS_DEBUG
-	Serial1.printf("AtlasStamp::_command_result() [END] T:[%d] RESPONSE [%d] BUSY [%d] TIMEOUT [%d]\n", millis(), _i2c_response_code, _is_busy, _async_comand_ready_by);
+	Serial.printf("AtlasStamp::_command_result() [END] T:[%d] RESPONSE [%d] BUSY [%d] TIMEOUT [%d]\n", millis(), _i2c_response_code, _is_busy, _async_comand_ready_by);
 #endif
 
 	//Devolvemos el codigo de respuesta :)
@@ -164,7 +164,7 @@ uint8_t AtlasStamp::_command(char* cmd, unsigned long t)
 {
 
 #ifdef ATLAS_DEBUG
-	Serial1.printf("AtlasStamp::_command() [START] T:[%d]\n", millis());
+	Serial.printf("AtlasStamp::_command() [START] T:[%d]\n", millis());
 #endif
 	//Si el STAMP no esta listo,
 	//devolvemos NULO
@@ -186,7 +186,7 @@ uint8_t AtlasStamp::_raw_command(char* cmd, unsigned long t)
 	uint8_t _i2c_response_code = 254;
 	
 	_clean_buffer();								//Limpiamos el buffer
-	_cleanWire();
+	_clean_wire();
 
 	Wire.beginTransmission(_address); 	                //call the circuit by its ID number.
 	Wire.write(cmd);        			        //transmit the command that was sent through the serial port.
@@ -196,7 +196,7 @@ uint8_t AtlasStamp::_raw_command(char* cmd, unsigned long t)
 	if (responseStamp != 0)
 	{
 #ifdef ATLAS_DEBUG
-		Serial1.printf("AtlasStamp::_raw_command() I2C response error: %d\n", responseStamp);
+		Serial.printf("AtlasStamp::_raw_command() I2C response error: %d\n", responseStamp);
 #endif
 		return responseStamp;
 	}
@@ -214,7 +214,7 @@ uint8_t AtlasStamp::_raw_command(char* cmd, unsigned long t)
 		{
 			//Esto es necesario si no queremos que se cuelgue el i2c
 			//Tenemos que limpiar los datos del buffer antes de volver a usar el bus
-			_cleanWire();
+			_clean_wire();
 		}
 		delay(50);
 	}
@@ -248,10 +248,10 @@ uint8_t AtlasStamp::_raw_command(char* cmd, unsigned long t)
 	}
 	//Esto es necesario si no queremos que se cuelgue el i2c
 	//Tenemos que limpiar los datos del buffer antes de volver a usar el bus
-	_cleanWire();
+	_clean_wire();
 #ifdef ATLAS_DEBUG
-	Serial1.printf("AtlasStamp::_raw_command() [END] T[%d]  BYTESREC [%d] CODE [%d] RESPONSE [%s]\n", millis(), _i2c_bytes_received, _i2c_response_code, _buffer);
-	Serial1.printf("AtlasStamp::_raw_command() [END] BUSY[%d] CMD[%s] BYTESREC[%d] CODE[%d] RESPONSE[%s]\n", busy(), cmd, _i2c_bytes_received, _i2c_response_code, _buffer);
+	Serial.printf("AtlasStamp::_raw_command() [END] T[%d]  BYTESREC [%d] CODE [%d] RESPONSE [%s]\n", millis(), _i2c_bytes_received, _i2c_response_code, _buffer);
+	Serial.printf("AtlasStamp::_raw_command() [END] BUSY[%d] CMD[%s] BYTESREC[%d] CODE[%d] RESPONSE[%s]\n", busy(), cmd, _i2c_bytes_received, _i2c_response_code, _buffer);
 #endif
 	//Devolvemos el codigo de respuesta :)
 	//Si es 1 tendremos _buffer cargado con la respuesta al comando
@@ -297,30 +297,34 @@ float* const AtlasStamp::read()
 {
 	if (ATLAS_SUCCESS_RESPONSE == _command(ATLAS_READ_COMAND, 1000))
 	{
-		return _parseResult();
+		return _parse_sensor_read();
 	}
 	return nullptr;
 }
 
-bool const AtlasStamp::readAsync()
+bool const AtlasStamp::read_async()
 {
 	return _command_async(ATLAS_READ_COMAND, 1000);
 }
 
-float* const AtlasStamp::resultAsync()
+float* const AtlasStamp::result_async()
 {
 	if (ATLAS_SUCCESS_RESPONSE == _command_result())
 	{
-		return _parseResult();
+		return _parse_sensor_read();
 	}
 	return nullptr;
 }
 
-float* const AtlasStamp::_parseResult(void)
+float* const AtlasStamp::_parse_sensor_read(void)
 {
 	//Cuando llamamos a esta fucnion deberiamos tener en el _buffer una cadena 
 	//representando la medida del sensor, esta dependera, pudiendo ser, un float (58.7)
 	// o una lista de floats separada por comas (12.5,22.5,1.0,00.2)
+#ifdef ATLAS_DEBUG
+	Serial.printf("AtlasStamp::_parse_sensor_read() T[%lu] sensor fields [%d] response buffer [%s]\n", millis(), _response_field_count, _buffer);
+#endif
+
 	if (_response_field_count > 1)
 	{
 		char *current_token;
@@ -339,12 +343,18 @@ float* const AtlasStamp::_parseResult(void)
 				//thats not true so set the value to default error
 				*(_last_result + i) = -2048.0;
 			}
+#ifdef ATLAS_DEBUG
+			Serial.printf("Field[%d] value[%4.2f]\n", i+1, *_last_result);
+#endif
 		}
 	}
 	else
 	{
 		//Is a simple sensor only a float string in the buffer, just set it.
 		*_last_result = atof(_buffer);
+#ifdef ATLAS_DEBUG
+		Serial.printf("Field[%d] value[%4.2f]\n", 1, *_last_result);
+#endif
 	}
 	return _last_result;
 }
@@ -373,7 +383,7 @@ char* AtlasStamp::_getBuffer()
 
 bool AtlasStamp::_stampConnected()
 {
-	//Si ay estamos conectados decimos que si :)
+	//If we are already inicialized return true
 	if (_is_init) { return true; }
 
 	uint8_t stampConnected = 255;
@@ -383,7 +393,7 @@ bool AtlasStamp::_stampConnected()
 		Wire.beginTransmission(_address);      // just do a short connection attempt without command to scan i2c for devices
 		stampConnected = Wire.endTransmission(true);
 #ifdef ATLAS_DEBUG
-		Serial1.printf("AtlasStamp::_stampConnected() _addres:[0x%02x] result:[%d]\n", _address, stampConnected);
+		Serial.printf("AtlasStamp::_stampConnected() _addres:[0x%02x] result:[%d]\n", _address, stampConnected);
 #endif // ATLAS_DEBUG
 
 		//stampResponse=0 significa que tenemos device
@@ -395,8 +405,8 @@ bool AtlasStamp::_stampConnected()
 			info_response = _raw_command(ATLAS_INFO_COMAND, 300);
 
 #ifdef ATLAS_DEBUG
-			Serial1.printf("AtlasStamp::_stampConnected() CMD[%s] _addres:[0x%02x] result2:[%d]\n", ATLAS_INFO_COMAND, _address, info_response);
-			Serial1.printf("AtlasStamp::_stampConnected() _buffer:[%s]\n", _buffer);
+			Serial.printf("AtlasStamp::_stampConnected() CMD[%s] _addres:[0x%02x] result2:[%d]\n", ATLAS_INFO_COMAND, _address, info_response);
+			Serial.printf("AtlasStamp::_stampConnected() _buffer:[%s]\n", _buffer);
 #endif // ATLAS_DEBUG
 
 			//Es un sensor EZO, devolvemos TRUE y seguimos :)
@@ -484,7 +494,6 @@ char* const AtlasStamp::info()
 
 bool AtlasStamp::led()
 {
-	bool tmpState = false;
 	if (ATLAS_SUCCESS_RESPONSE == _command("L,?", 150))
 	{
 		//Una vez qui tenemos en el bufer algo asi (las | separan, no cuentan como caracter en el buffer)
@@ -493,12 +502,10 @@ bool AtlasStamp::led()
 		//Comporbamos que la posicion 3 del buffer sea un 0 o un 1
 		if (_readBuffer(3) == '1')
 		{
-			tmpState = true;
+			return true;
 		}
 	}
-	//TODO: Afinar codigos de respuesta :)
-	//commandResult puede ser varias cosas
-	return tmpState;
+	return false;
 }
 
 bool AtlasStamp::led(bool state)

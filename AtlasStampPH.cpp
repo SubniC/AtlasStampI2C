@@ -3,12 +3,11 @@
 // 
 
 #include "AtlasStampPH.h"
-//AtlasStamp(address, unit, unit_len, min_value, max_value, num_fields_in_response)
-//
 AtlasStampPh::AtlasStampPh(uint8_t address) :
 	AtlasStampTemperatureCompensated(address, "PH", 2, 0.001f, 14.000f, 1)
 
 {
+	//https://www.quora.com/What-is-the-unit-of-measure-for-pH
 }
 
 bool const AtlasStampPh::begin()

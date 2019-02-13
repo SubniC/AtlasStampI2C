@@ -11,7 +11,7 @@
 
 #include <Wire.h>  
 
-//#define ATLAS_DEBUG
+#define ATLAS_DEBUG
 
 #define ATLAS_SENSOR_PH 1
 #define ATLAS_SENSOR_ORP 2
@@ -102,14 +102,24 @@ public:
 	virtual bool const begin(void) { while (1); }
 	
 	float* const read(void);
-	bool const readAsync(void);
-	float* const resultAsync(void);
+	bool const read_async(void);
+	float* const result_async(void);
 
 	inline uint8_t const response_count(void) const { return _response_field_count; }
 
+//#ifdef ATLAS_DEBUG
+//	inline void set_debug_stream(Stream& ds) {
+//		_debug_stream = ds
+//	}
+//#endif
+
 protected:
 
-	float* const _parseResult(void);
+//#ifdef ATLAS_DEBUG
+//	Stream& _debug_stream;
+//#endif
+
+	float* const _parse_sensor_read(void);
 	virtual bool const _stampReady(void) { while (1); };
 
 	char _infoBuffer[256] = { 0 };
@@ -148,7 +158,7 @@ private:
 	float _max_value;
 	float _min_value;
 	unsigned long _async_comand_ready_by;
-	void _cleanWire(void);
+	void _clean_wire(void);
 
 };
 
