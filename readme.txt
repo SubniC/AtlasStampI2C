@@ -1,19 +1,88 @@
-Arduino Compatible Cross Platform C++ Library Project : For more information see http://www.visualmicro.com
-
-This project works exactly the same way as an Arduino library. 
-
-Add this project to any solution that contains an Arduino project and #include <headers.h> in code as you would any normal Arduino library headers. 
-
-To enable intellisense and to support live build discovery outside of the "standard" Arduino library locations, ensure that the library is added as a shared project reference to the master Arduino project. To do this, right click the master project "References" node and then click "Add Reference". A window will open and the library will appear on the "Shared Projects" tab. Click the checkbox next to the library name to add the reference. If this library is moved the shared referencemust be removed and re-added.
-
-VS2017 has a bug, workround: After moving existing source code within a "library or shared project", close and re-open the solution.
-
-Visual Studio will display intellisense for libraries based on the platform/board that has been specified for the currently active "Startup Project" of the current solution.
 
 
-IMPORTANT: The arduino.cc Library Rules must be followed when adding code or restructing libraries.
+## SYNC EXAMPLE
+
+```
+#include <wire.h>
+#include "AtlasStampPH.h"
+
+#define PH_SENSOR_ADDRESS 0x63
+
+AtlasStampPh PHSensor(PH_SENSOR_ADDRESS);
+
+void setup() {
+
+	Serial.begin(115200);
+
+	Wire.begin();
+
+	if (!PHSensor.begin())
+	{
+		Serial.println("ERROR,PH sensor not present or failed to inicialize");
+	}
+
+	Serial.println(PHSensor.info());
+	Serial.println("AtlasStamp Library test setup finish");
+}
+
+void loop() {
+	float* dummyRead;
+	uint32_t starttime = 0;
+
+	dummyRead = PHSensor.read();
+	Serial.printf("READ PH: %4.2f (%s) min[%4.3f] max[%4.3f] in[%lu]\n", *dummyRead, PHSensor.get_unit(), PHSensor.get_min_value(), PHSensor.get_max_value(), millis()- starttime);
+	Serial.println();
+}
+
+```
+
+## ASYNC EXAMPLE
+
+```
+#include <wire.h>
+#include "AtlasStampPH.h"
+
+#define PH_SENSOR_ADDRESS 0x63
+
+AtlasStampPh PHSensor(PH_SENSOR_ADDRESS);
+
+void setup() {
+
+	Serial.begin(115200);
+
+	Wire.begin();
+
+	if (!PHSensor.begin())
+	{
+		Serial.println("ERROR,PH sensor not present or failed to inicialize");
+	}
+
+	Serial.println(PHSensor.info());
+	Serial.println("AtlasStamp Library test setup finish");
+}
+
+void loop() {
+	float* dummyRead;
 	
+	//Init the reading if sensor is in standby
+	PHSensor.read_async();
 
+	//Do things here while the module make the reading
 
-
-blog: http://www.visualmicro.com/post/2017/01/16/Arduino-Cross-Platform-Library-Development.aspx
+	//Check if the reading is completed
+	if (PHSensor.available())
+	{
+	    //Pull the result from the sensor
+		dummyRead = PHSensor.result_async();
+		if (*dummyRead == -2048.0f)
+		{
+			Serial.printf("ASYNC_READ PH: Invalid result got from Atlas module in[%lu]\n",millis()- starttime);
+		}
+		else
+		{
+			Serial.printf("ASYNC_READ PH: %4.2f in[%lu]\n", *dummyRead, millis()- starttime);
+		}
+		Serial.println();
+	}
+}
+```
