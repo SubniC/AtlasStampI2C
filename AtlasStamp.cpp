@@ -1,47 +1,29 @@
 #include "AtlasStamp.h"
 
 
-AtlasStamp::AtlasStamp(byte address)
+AtlasStamp::AtlasStamp(uint8_t address, char* unit, uint8_t unit_len, float min_value, float max_value, uint8_t num_fields_in_response) : 
+	_address(address),
+	_response_field_count(num_fields_in_response),
+	_last_result{ (float*)malloc(sizeof(float) * _response_field_count) },
+	_is_init(false),
+	_is_busy(false),
+	_async_comand_ready_by(0),
+	_min_value(min_value),
+	_max_value(max_value),
+	_unit{ (char*)malloc(sizeof(char) * unit_len) },
+	stamp_version{ '0','.','0','\0' }
 {
-	_address = address;
-	_is_init = false;
-	_is_busy = false;
-	_async_comand_ready_by = 0;
-	_min_value = 0;
-	_max_value = 0;
-	_unit = "UNK";
-	stamp_version[0] = '0';
-	stamp_version[1] = '.';
-	stamp_version[2] = '0';
-	stamp_version[3] = '\0';
-	_cleanBuffer();
+	//Inicialize the sensor unit
+	memcpy(_unit, unit, unit_len);
+	_clean_buffer();
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// <brief>
-/// 	OJO ESTA FUNCION ESTA PENSADA PARA DEPURACION, NO PAR ASU USO GENERAL UTILIZAR LAS
-/// 	FUNCIONES PROPIAS DE CADA CLASE HIJA PARA EL DESPLIEGUE DE LOS SENSORES!
-/// </brief>
-///
-/// <remarks>	Mdps, 20/11/2017. </remarks>
-///
-/// <param name="cmd">	  	[in,out] If non-null, the command. </param>
-/// <param name="timeout">	The timeout. </param>
-///
-/// <returns>	A byte. </returns>
-////////////////////////////////////////////////////////////////////////////////////////////////////
-byte AtlasStamp::raw_command(char* cmd, unsigned long timeout)
+uint8_t AtlasStamp::raw_command(char* cmd, unsigned long timeout)
 {
 	return _raw_command(cmd, timeout);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// <brief>	Clean buffer </brief>
-///
-/// <remarks>	Mdps, 20/11/2017. </remarks>
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void AtlasStamp::_cleanBuffer()
+void AtlasStamp::_clean_buffer()
 {
 	for (int i = 0; i < MAX_DATA_TO_READ; i++)
 	{
@@ -102,10 +84,10 @@ bool AtlasStamp::_command_async(char* cmd, unsigned long t)
 }
 
 //Obtiene el resultado de un comando asincrono
-byte AtlasStamp::_command_result()
+uint8_t AtlasStamp::_command_result()
 {
-	byte tmp_char = 0;
-	byte _i2c_response_code = 254;
+	uint8_t tmp_char = 0;
+	uint8_t _i2c_response_code = 254;
 
 	if (!_is_init)
 	{
@@ -120,11 +102,11 @@ byte AtlasStamp::_command_result()
 		return ATLAS_BUSY_RESPONSE;
 	}
 
-	_cleanBuffer();								//Limpiamos el buffer
+	_clean_buffer();								//Limpiamos el buffer
 
 	//Nos aseguramos de que esta listo antes de seguir :)
 	while (_i2c_response_code == ATLAS_BUSY_RESPONSE) {
-		Wire.requestFrom(_address, (byte)MAX_DATA_TO_READ);
+		Wire.requestFrom(_address, (uint8_t)MAX_DATA_TO_READ);
 		_i2c_response_code = Wire.read();   
 		if (_i2c_response_code == ATLAS_BUSY_RESPONSE)
 		{
@@ -178,7 +160,7 @@ byte AtlasStamp::_command_result()
 }
 
 
-byte AtlasStamp::_command(char* cmd, unsigned long t)
+uint8_t AtlasStamp::_command(char* cmd, unsigned long t)
 {
 
 #ifdef ATLAS_DEBUG
@@ -198,17 +180,17 @@ byte AtlasStamp::_command(char* cmd, unsigned long t)
 	return _raw_command(cmd, t);
 }
 
-byte AtlasStamp::_raw_command(char* cmd, unsigned long t)
+uint8_t AtlasStamp::_raw_command(char* cmd, unsigned long t)
 {
-	byte tmp_char = 0;
-	byte _i2c_response_code = 254;
+	uint8_t tmp_char = 0;
+	uint8_t _i2c_response_code = 254;
 	
-	_cleanBuffer();								//Limpiamos el buffer
+	_clean_buffer();								//Limpiamos el buffer
 	_cleanWire();
 
 	Wire.beginTransmission(_address); 	                //call the circuit by its ID number.
 	Wire.write(cmd);        			        //transmit the command that was sent through the serial port.
-	byte responseStamp = Wire.endTransmission(true);          	                //end the I2C data transmission.
+	uint8_t responseStamp = Wire.endTransmission(true);          	                //end the I2C data transmission.
 
 	//Failsafe para que nos e cuelgue
 	if (responseStamp != 0)
@@ -279,7 +261,7 @@ byte AtlasStamp::_raw_command(char* cmd, unsigned long t)
 void AtlasStamp::raw_response(char* localBuffer)
 {
 	strcpy(localBuffer, _buffer);
-	//_cleanBuffer();
+	//_clean_buffer();
 }
 
 char AtlasStamp::_readBuffer(byte pos)
@@ -291,12 +273,12 @@ char AtlasStamp::_readBuffer(byte pos)
 	return 0;
 }
 
-byte AtlasStamp::_bytes_in_buffer()
+uint8_t AtlasStamp::_bytes_in_buffer()
 {
 	return _i2c_bytes_received;
 }
 
-byte AtlasStamp::address()
+uint8_t AtlasStamp::address()
 {
 	return _address;
 }
@@ -309,6 +291,62 @@ bool AtlasStamp::ready()
 bool AtlasStamp::busy()
 {
 	return _is_busy;
+}
+
+float* const AtlasStamp::read()
+{
+	if (ATLAS_SUCCESS_RESPONSE == _command(ATLAS_READ_COMAND, 1000))
+	{
+		return _parseResult();
+	}
+	return nullptr;
+}
+
+bool const AtlasStamp::readAsync()
+{
+	return _command_async(ATLAS_READ_COMAND, 1000);
+}
+
+float* const AtlasStamp::resultAsync()
+{
+	if (ATLAS_SUCCESS_RESPONSE == _command_result())
+	{
+		return _parseResult();
+	}
+	return nullptr;
+}
+
+float* const AtlasStamp::_parseResult(void)
+{
+	//Cuando llamamos a esta fucnion deberiamos tener en el _buffer una cadena 
+	//representando la medida del sensor, esta dependera, pudiendo ser, un float (58.7)
+	// o una lista de floats separada por comas (12.5,22.5,1.0,00.2)
+	if (_response_field_count > 1)
+	{
+		char *current_token;
+		current_token = strtok(_buffer,",");
+		for (int i = 0; i < _response_field_count; i++)
+		{
+			if (current_token != NULL)
+			{
+				*(_last_result+i) = atof(current_token);
+				//Get next value if previous was not null
+				current_token = strtok(NULL, ",");
+			}
+			else
+			{
+				//The sensor is suposed to have multiple values, but
+				//thats not true so set the value to default error
+				*(_last_result + i) = -2048.0;
+			}
+		}
+	}
+	else
+	{
+		//Is a simple sensor only a float string in the buffer, just set it.
+		*_last_result = atof(_buffer);
+	}
+	return _last_result;
 }
 
 void AtlasStamp::_ready(bool isReady)
@@ -338,8 +376,8 @@ bool AtlasStamp::_stampConnected()
 	//Si ay estamos conectados decimos que si :)
 	if (_is_init) { return true; }
 
-	byte stampConnected = 255;
-	byte info_response = 255;
+	uint8_t stampConnected = 255;
+	uint8_t info_response = 255;
 	for (int i = 0; i < MAX_CONNECTION_TRIES; i++)
 	{
 		Wire.beginTransmission(_address);      // just do a short connection attempt without command to scan i2c for devices
@@ -373,7 +411,7 @@ bool AtlasStamp::_stampConnected()
 	return false;
 }
 
-char* AtlasStamp::unit()
+char* AtlasStamp::get_unit()
 {
 	return _unit;
 }
@@ -384,19 +422,18 @@ void AtlasStamp::purge()
 	_async_comand_ready_by = 0;
 }
 
-float AtlasStamp::_vcc(void)
+float AtlasStamp::get_vcc(void)
 {
-	byte commandResult = _command("Status", 200);
 	float returnVal = -2048.0f;
 	char tmpItem[8] = { 0 };
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
+	if (ATLAS_SUCCESS_RESPONSE == _command("Status", 200))
 	{
 		//Una vez qui tenemos en el bufer algo asi (las | separan, no cuentan como caracter en el buffer)
 		//?|S|T|A|T|U|S|,|P|,|5|.|0|6|4|NULL
 		//TODO: http://stackoverflow.com/questions/32822988/get-the-last-token-of-a-string-in-c
-		if (_readBuffer(9) == ',' && _bytes_in_buffer() > 10)
+		if (_readBuffer(9) == ',' && _i2c_bytes_received > 10)
 		{
-			for (int i = 10; i < _bytes_in_buffer(); i++)
+			for (int i = 10; i < _i2c_bytes_received; i++)
 			{
 				if (_readBuffer(i) != NULL_CHARACTER)
 				{
@@ -413,43 +450,42 @@ float AtlasStamp::_vcc(void)
 	return returnVal;
 }
 
-float AtlasStamp::min_value()
+float AtlasStamp::get_min_value()
 {
 	return _min_value;
 }
 
-float AtlasStamp::max_value()
+float AtlasStamp::get_max_value()
 {
 	return _max_value;
 }
 
-void AtlasStamp::unit(char* unit)
-{
-	_unit = unit;
-}
+//void AtlasStamp::unit(char* unit)
+//{
+//	_unit = unit;
+//}
+//
+//void AtlasStamp::min_value(float value)
+//{
+//	_min_value = value;
+//}
+//
+//void AtlasStamp::max_value(float value)
+//{
+//	_max_value = value;
+//}
 
-void AtlasStamp::min_value(float value)
+char* const AtlasStamp::info()
 {
-	_min_value = value;
-}
-
-void AtlasStamp::max_value(float value)
-{
-	_max_value = value;
-}
-
-char* AtlasStamp::info()
-{
-	sprintf(_infoBuffer,"ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] VCC:[%4.4f]", _address, stamp_version, _is_init, _is_busy, _min_value, _max_value, _unit, _vcc());
+	sprintf(_infoBuffer,"ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] VCC:[%4.4f]", _address, stamp_version, _is_init, _is_busy, _min_value, _max_value, _unit, get_vcc());
 	return _infoBuffer;
 }
 
 
 bool AtlasStamp::led()
 {
-	byte commandResult = _command("L,?", 150);
 	bool tmpState = false;
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
+	if (ATLAS_SUCCESS_RESPONSE == _command("L,?", 150))
 	{
 		//Una vez qui tenemos en el bufer algo asi (las | separan, no cuentan como caracter en el buffer)
 		// ? | L | , | 1 | null
@@ -478,10 +514,8 @@ bool AtlasStamp::led(bool state)
 	{
 		tmpCmd[2] = '1';
 	}
-
-	//Lanzamos el coamndo y esperamos la confirmación
-	byte commandResult = _command(tmpCmd, 300);
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
+	//Send the command and wait for confirmation
+	if (ATLAS_SUCCESS_RESPONSE == _command(tmpCmd, 300))
 	{
 		return true;
 	}

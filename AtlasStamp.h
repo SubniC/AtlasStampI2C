@@ -59,83 +59,97 @@
 class AtlasStamp
 {
 public:
-	//Constructor y destructor
-	explicit AtlasStamp(byte);
+	//Constructor and destructor
+	explicit AtlasStamp(uint8_t, char*, uint8_t, float, float, uint8_t=1);
+	//virtual ~AtlasStamp() {};
 
-
-	//Metodos de la api de ATLAS
+	//Atlas API
 	//bool calibrate(void);
 	//bool factoryReset(void);
-	char* info(void);
-	bool led(); //Esta encendido el led?
+	float get_vcc(void);
+
+	virtual char* const info(void);
+
+	bool led();
 	bool led(bool);
+	//bool is_led_on();
 	//bool protocolLock();
 	//bool protocolLock(bool);
 	//bool sleep(void);
 	//bool wakeup(void);
 	//char* status(void);
-	byte address();
-	bool ready(); //Indica si esta inicializado el sensor
+	uint8_t address(); //Get the device address
+	bool ready(); //True if the sensor is inicialized
 	
-	//Metodos para sincronizacion en lecturas asincronas
-	bool busy(); //Inidica si esta en una lectura asincrona
-	bool available(); //Indica si tenemos resultado de una lectura asincrona
+	//Async reading synchronization
+	bool busy(); //True if is taking and async read
+	bool available(); //True if we have an async result ready
 
-	//Metodos de apoyo
-	float max_value();
-	float min_value();
-	char* unit();
+	//Helpers methods
+	float get_max_value(); //Returns the max value of the sensor
+	float get_min_value(); //Returns the min value of the sensor
+	char* get_unit(); //Returns unit of the sensor as char array
+	void purge(); //Cleans the internal object buffers and state to READY
 
-	/// <summary>
-	/// Limpia el sensor, eliminado el estado BUSY si es que existe
-	/// </summary>
-	void purge();
-
-	byte raw_command(char*, unsigned long);
+	//DEBUG METHOS SHOULD NOT BE USED IN PRODUCCTION CODE
+	uint8_t raw_command(char*, unsigned long);
 	void raw_response(char*);
 
-	//METODO VIRTUALES PURAS
+	//Virtual methods, not using pure virtual here to optimize program memory with pic32 compiler
+	//more here: http://chipkit.net/efficient-cplus-plus/
 	//http://www.learncpp.com/cpp-tutorial/126-pure-virtual-functions-abstract-base-classes-and-interface-classes/
-	//Virtualidad pura no es optima con el compilador de pic32 http ://chipkit.net/efficient-cplus-plus/
-	//
-	//virtual float* read(void)=0;
-	//virtual bool readAsync(void)=0;
-	//virtual float* resultAsync(void)=0;
-	//virtual ~AtlasStamp(){};
+	
+	virtual bool const begin(void) { while (1); }
+	
+	float* const read(void);
+	bool const readAsync(void);
+	float* const resultAsync(void);
 
-private:
-	char _buffer[BUFFER_SIZE];
-	byte _i2c_bytes_received;
-	bool _is_init;
-	bool _is_busy;
-	float _max_value;
-	float _min_value;
-	char* _unit;
-	unsigned long _async_comand_ready_by;
-	void _cleanWire(void);
+	inline uint8_t const response_count(void) const { return _response_field_count; }
+
 protected:
-	//TODO: Hacer limpieza de metodos, esta clase va a pasar a ser abstracta asi que podemos tener
-	//mas metodos protected y menos funciones de asignacion y de lectura
+
+	float* const _parseResult(void);
+	virtual bool const _stampReady(void) { while (1); };
+
 	char _infoBuffer[256] = { 0 };
 	uint8_t _address;
 	char stamp_version[5];
 	void _ready(bool); //Fija el valor de _is_init
 	char* _getBuffer();
-	char _readBuffer(byte);
-	void _cleanBuffer(void);
-	byte _bytes_in_buffer(void);
-	byte _command(char *, unsigned long);
-	byte _raw_command(char *, unsigned long);
+	char _readBuffer(uint8_t);
+	void _clean_buffer(void);
+	uint8_t _bytes_in_buffer(void);
+	uint8_t _command(char *, unsigned long);
+	uint8_t _raw_command(char *, unsigned long);
 	bool _stampConnected(void);
-	float _vcc(void);
-	void max_value(float);
-	void min_value(float);
-	void unit(char*);
+	
+	//void max_value(float);
+	//void min_value(float);
+	//void unit(char*);
 	/*
 	Commandos asincronos
 	*/
 	bool _command_async(char *, unsigned long);
-	byte _command_result();
+	uint8_t _command_result();
+
+private:
+	char _buffer[BUFFER_SIZE];
+
+
+	float* _last_result;
+	uint8_t _response_field_count;
+	char* _unit;
+
+
+	uint8_t _i2c_bytes_received;
+	bool _is_init;
+	bool _is_busy;
+	float _max_value;
+	float _min_value;
+	unsigned long _async_comand_ready_by;
+	void _cleanWire(void);
+
 };
 
 #endif
