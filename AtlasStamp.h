@@ -11,7 +11,7 @@
 
 #include <Wire.h>  
 
-#define ATLAS_DEBUG
+//#define ATLAS_DEBUG
 
 #define ATLAS_SENSOR_PH 1
 #define ATLAS_SENSOR_ORP 2
@@ -120,20 +120,25 @@ protected:
 //#endif
 
 	float* const _parse_sensor_read(void);
-	virtual bool const _stampReady(void) { while (1); };
+	virtual bool const _stamp_ready(void) { while (1); };
 
-	char _infoBuffer[256] = { 0 };
+
+	char _command_buffer[16];
+	char _infoBuffer[256]; //Necesario?
+
 	uint8_t _address;
 	char stamp_version[5];
 	void _ready(bool); //Fija el valor de _is_init
-	char* _getBuffer();
-	char _readBuffer(uint8_t);
+	char* _get_response_buffer();
+	char _read_buffer(uint8_t);
 	void _clean_buffer(void);
 	uint8_t _bytes_in_buffer(void);
 	uint8_t _command(char *, unsigned long);
 	uint8_t _raw_command(char *, unsigned long);
-	bool _stampConnected(void);
-	
+	bool _stamp_connected(void);
+	uint8_t _response_field_count;
+
+
 	//void max_value(float);
 	//void min_value(float);
 	//void unit(char*);
@@ -144,11 +149,10 @@ protected:
 	uint8_t _command_result();
 
 private:
-	char _buffer[BUFFER_SIZE];
+	char _response_buffer[BUFFER_SIZE];
 
 
 	float* _last_result;
-	uint8_t _response_field_count;
 	char* _unit;
 
 

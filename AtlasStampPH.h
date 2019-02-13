@@ -30,7 +30,7 @@ public:
 
 
 private:
-	bool const _stampReady(void);
+	bool const _stamp_ready(void);
 };
 
 #endif

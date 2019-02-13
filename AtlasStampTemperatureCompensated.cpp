@@ -43,7 +43,7 @@ float AtlasStampTemperatureCompensated::_get_temperature()
 		//Serial.printf("Bytes in buffer: %d\n", _bytes_in_buffer());
 		for (int i = 3; i < _bytes_in_buffer() - 1; i++)
 		{
-			byteFromBuffer = _readBuffer(i);
+			byteFromBuffer = _read_buffer(i);
 
 			if (NULL_CHARACTER == byteFromBuffer)
 			{
@@ -56,7 +56,7 @@ float AtlasStampTemperatureCompensated::_get_temperature()
 		//Despues del bucle debemos tener en tmpTemperature la cadena con el 
 		//numero para pasarselo a ATOF
 #ifdef ATLAS_DEBUG
-		Serial.printf("AtlasStampTemperatureCompensated::temperature buffer [%s] global buffer [%s]\n", tmpBuffer, _getBuffer());
+		Serial.printf("AtlasStampTemperatureCompensated::temperature buffer [%s] global buffer [%s]\n", tmpBuffer, _get_response_buffer());
 #endif
 		_current_temperature = atof(tmpBuffer);
 	}
