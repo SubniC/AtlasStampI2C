@@ -45,12 +45,6 @@ void AtlasStamp::_resize_response_count(uint8_t count)
 	_last_result = (float*)realloc(_last_result, sizeof(float) * _response_field_count);
 }
 
-/// <summary>
-/// Inicia un comando asincrono
-/// </summary>
-/// <param name="cmd">Comando a enviar</param>
-/// <param name="t">Tiempo que requiere el Atlas para procesarlo</param>
-/// <returns>True en caso de exito, False en caso contrario</returns>
 bool AtlasStamp::_command_async(char* cmd, unsigned long t)
 {
 	
@@ -142,7 +136,7 @@ uint8_t AtlasStamp::_command_result()
 			{
 				//Añadimos el final de carro al buffer
 				_response_buffer[_i2c_bytes_received] = '\0';
-				_i2c_bytes_received++;
+				//_i2c_bytes_received++;
 				//Terminamos
 				break;
 			}
@@ -188,6 +182,28 @@ uint8_t AtlasStamp::_command(char* cmd, unsigned long t)
 		}
 	}
 	return false;
+}
+
+uint8_t AtlasStamp::read_ascii(char* buffer)
+{
+	if (ATLAS_SUCCESS_RESPONSE == _command(ATLAS_READ_COMAND, 1000))
+	{
+		strcpy(buffer, _response_buffer);
+		return _i2c_bytes_received;
+	}
+	return 0;
+	
+}
+
+uint8_t AtlasStamp::result_ascii_async(char* buffer)
+{
+	if (ATLAS_SUCCESS_RESPONSE == _command_result())
+	{
+		strcpy(buffer, _response_buffer);
+		return _i2c_bytes_received;
+	}
+	return 0;
+
 }
 
 float* const AtlasStamp::read()
@@ -289,9 +305,10 @@ bool AtlasStamp::_stamp_connected()
 		}
 		delay(CONNECTION_DELAY_MS);
 	}
-	//Clear the flag, is the child class the on that should activate it
+	//Clear the flag, is the child class the one that should activate it
 	//when more info about the module is parsed
 	_is_init = false;
+	//Return r, it contains true if we could stablish communication with an EZO module in the given address
 	return r;
 }
 

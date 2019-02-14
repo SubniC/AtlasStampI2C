@@ -4,8 +4,9 @@
 
 #include "AtlasStampEC.h"
 
-AtlasStampEc::AtlasStampEc(byte address) : 
-	AtlasStampTemperatureCompensated(address, "uS/cm", 5, 0.07f, 500000.0f, 4)
+AtlasStampEc::AtlasStampEc(byte address) :
+	AtlasStampTemperatureCompensated(address, "uS/cm", 5, 0.07f, 500000.0f, 4),
+	_current_k(-2048.0f)
 {
 }
 
@@ -125,7 +126,7 @@ bool const AtlasStampEc::_load_parameters()
 
 void AtlasStampEc::info(Stream& output)
 {
-	output.printf("ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f] K:[%4.2f]", _address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(), get_vcc(), get_k());
+	output.printf("ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f] K:[%4.2f]\n", _address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(), get_vcc(), get_k());
 }
 
 bool const AtlasStampEc::begin()
@@ -137,24 +138,24 @@ bool const AtlasStampEc::begin()
 		_load_parameters();
 
 		//Load the module current temperature value
-		_get_temperature();
+		_load_temperature();
+
+		//Load the module current K
+		_load_k();
+
 		return true;
 	}
 	return false;
 }
 
 
-//TODO: revisar de aquí hacia abajo
 bool const AtlasStampEc::_stamp_ready()
 {
 	_is_init = false;
-	//El padre controla que este coenctado un dispositivo en la direccion
-	//y que sea un EZO, ya de paso carga _response_buffer con los datos del comando
-	//INFO asi que sacamos y asignamos la version del sensor :)
 	if (_stamp_connected())
 	{
 		// EC EZO  -> '?I,EC,1.0 '
-		//Comprobamos si es nuestro tipo de sensor :)
+		//Is the type of sensor that is supposed to be?
 		if (_read_buffer(3) == 'E' && _read_buffer(4) == 'C')
 		{
 			stamp_version[0] = _read_buffer(6);
@@ -170,44 +171,36 @@ bool const AtlasStampEc::_stamp_ready()
 
 float AtlasStampEc::get_k()
 {
-	float tmpk = -2048.0;
-	byte commandResult = _command("K,?", 300);
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
+	return _current_k;
+}
+
+bool AtlasStampEc::_load_k()
+{
+	if (ATLAS_SUCCESS_RESPONSE == _command("K,?", 300))
 	{
 		//En el buffer tendremos:
 		// ? | K | , | 0 | . | 6 | 6 | null
-		//pero no sabemos exactamente cuandos caracteres son la k
-		//asi que lo haremos entre el que sabemos que es el primero y NULL
-		//recorremos el buffer
-		byte byteFromBuffer = 0;
-		char tmpBuffer[7] = { 0 };
-		for (int i = 3; i < _bytes_in_buffer() - 1; i++)
-		{
-			byteFromBuffer = _read_buffer(i);
-			if (NULL_CHARACTER == byteFromBuffer)
-			{
-				tmpBuffer[i - 3] = '\0';
-				break;
-			}
-			tmpBuffer[i - 3] = byteFromBuffer;
-		}
-		//Despues del bucle debemos tener en tmpPres la cadena con el 
-		//numero para pasarselo a ATOF
-		tmpk = atof(tmpBuffer);
+		char* res_buff = (char*)(_get_response_buffer() + 3);
+		_current_k = atof(res_buff);
+		return true;
 	}
-	//TODO: Afinar codigos de respuesta :)
-	return tmpk;
+	return false;
 }
 
 bool AtlasStampEc::set_k(float value)
 {
-	char buffer[7] = { 0 };
-	//Guardamos el numero en el buffer
-	sprintf(buffer, "K,%4.2f", value);
-	//Generamos el comando
-	byte commandResult = _command(buffer, 300);
-	if (commandResult)
+	if (_current_k == value)
 	{
+#ifdef ATLAS_DEBUG_EC
+		Serial.println("EC: cant set K already same value [%4.2f]\n", _current_k);
+#endif
+		return true;
+	}
+
+	sprintf(_command_buffer, "K,%4.2f", value);
+	if (ATLAS_SUCCESS_RESPONSE == _command(_command_buffer, 300))
+	{
+		_current_k = value;
 		return true;
 	}
 	return false;

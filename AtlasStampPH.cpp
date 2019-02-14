@@ -18,7 +18,7 @@ bool const AtlasStampPh::begin()
 	if (_stamp_ready())
 	{
 		//Force initial reading of stored temperature value
-		_get_temperature();
+		_load_temperature();
 		return true;
 	}
 	return false;

@@ -48,6 +48,10 @@ public:
 private:
 	uint8_t _parameter_state = 0;
 
+	float _current_k;
+
+	bool _load_k(void);
+
 	bool const _load_parameters();
 
 	bool const _stamp_ready();

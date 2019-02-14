@@ -50,8 +50,8 @@ private:
 	float _current_pressure;
 	bool const _stamp_ready();
 
-	bool const _get_pressure(void);
-	bool const _get_salinity(void);
+	bool const _load_pressure(void);
+	bool const _load_salinity(void);
 
 };
 
