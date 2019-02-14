@@ -11,7 +11,7 @@
 
 #include <Wire.h>  
 
-//#define ATLAS_DEBUG
+#define ATLAS_DEBUG
 
 #define ATLAS_SENSOR_PH 1
 #define ATLAS_SENSOR_ORP 2
@@ -46,7 +46,10 @@
 #define ATLAS_READ_COMAND "R"
 
 
-//TODO: terminar de implementar API de arlas
+//TODO: terminar de implementar API de atlas
+//TODO: Revisar char* para que todos sean C style strings
+//TODO: _command() y raw_command() se peuden unificar?
+//TODO: Cambio dinamico de _num_fields_response
 class AtlasStamp
 {
 public:
@@ -66,8 +69,11 @@ public:
 	//bool is_led_on();
 	//bool protocolLock();
 	//bool protocolLock(bool);
-	//bool sleep(void);
-	//bool wakeup(void);
+	
+	bool const sleep(void);
+	bool const wakeup(void);
+	bool const sleeping(void) const;
+
 	//char* status(void);
 	uint8_t address(); //Get the device address
 	bool ready(); //True if the sensor is inicialized
@@ -89,6 +95,8 @@ public:
 	//Virtual methods, not using pure virtual here to optimize program memory with pic32 compiler
 	//more here: http://chipkit.net/efficient-cplus-plus/
 	//http://www.learncpp.com/cpp-tutorial/126-pure-virtual-functions-abstract-base-classes-and-interface-classes/
+	//TODO: Esto podria tener una implementacion basica como la que hay en ORP, asi no 
+	//tendriamos que implementarlo en la base.
 	virtual bool const begin(void) { while (1); }
 	
 	float* const read(void);
@@ -98,7 +106,12 @@ public:
 	inline uint8_t const response_count(void) const { return _response_field_count; }
 
 protected:
+
+	//TODO: Esto no es igual en todas las clases? solo para sacar la version? no se podria hacer en la conexion?
+	//y eliminamos esta fucnion de las clases derivadas? ademas eso permitira crear objetos "base" AtlasStamp compatibles
+	//con cualquier modulo o no?
 	virtual bool const _stamp_ready(void) { while (1); };
+	
 	float* const _parse_sensor_read(void);
 	
 	char _command_buffer[32];
@@ -111,8 +124,10 @@ protected:
 	char _read_buffer(uint8_t);
 	void _clean_buffer(void);
 	uint8_t _bytes_in_buffer(void);
+
 	uint8_t _command(char *, unsigned long);
 	uint8_t _raw_command(char *, unsigned long);
+	
 	bool _stamp_connected(void);
 
 	uint8_t _address;
@@ -128,6 +143,7 @@ protected:
 private:
 	char _response_buffer[BUFFER_SIZE];
 
+	bool is_awake;
 
 	float* _last_result;
 	char* _unit;
