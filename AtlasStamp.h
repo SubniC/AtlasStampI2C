@@ -162,7 +162,7 @@ private:
 	unsigned long _async_comand_ready_by;
 	
 	uint8_t _response_field_count; //TODO: no tocar directamente solo por medio del constructor o la funcion _resize_response_count()
-
+	uint8_t _max_response_field_count; //Maximo numero de campos de respuesta que puede tener el sensor
 
 	void _clean_wire(void);
 };
