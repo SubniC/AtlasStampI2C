@@ -5,7 +5,7 @@
 #include "AtlasStampEC.h"
 
 AtlasStampEc::AtlasStampEc(byte address) : 
-	AtlasStampTemperatureCompensated(address, "uS/cm", 5, 0.07f, 500000.0f)
+	AtlasStampTemperatureCompensated(address, "uS/cm", 5, 0.07f, 500000.0f, 4)
 {
 }
 

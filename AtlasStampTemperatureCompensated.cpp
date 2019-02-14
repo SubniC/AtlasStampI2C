@@ -1,7 +1,7 @@
 #include "AtlasStampTemperatureCompensated.h"
 
-AtlasStampTemperatureCompensated::AtlasStampTemperatureCompensated(uint8_t address, char* unit, uint8_t unit_len, float min_value, float max_value, uint8_t num_fields_in_response) :
-	AtlasStamp(address, unit, unit_len, min_value, max_value, num_fields_in_response), _current_temperature(-2048.0)
+AtlasStampTemperatureCompensated::AtlasStampTemperatureCompensated(uint8_t address, char* unit, uint8_t unit_len, float min_value, float max_value, uint8_t max_num_fields_in_response) :
+	AtlasStamp(address, unit, unit_len, min_value, max_value, max_num_fields_in_response), _current_temperature(-2048.0)
 {
 
 }

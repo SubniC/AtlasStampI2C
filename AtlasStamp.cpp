@@ -1,9 +1,10 @@
 #include "AtlasStamp.h"
 
 //TODO: Parametro unit_len deprecated? se peude cambiar en el malloc por strlen()?
-AtlasStamp::AtlasStamp(uint8_t address, char* unit, uint8_t unit_len, float min_value, float max_value, uint8_t num_fields_in_response) : 
+AtlasStamp::AtlasStamp(uint8_t address, char* unit, uint8_t unit_len, float min_value, float max_value, uint8_t max_num_fields_in_response) :
 	_address(address),
-	_response_field_count(num_fields_in_response),
+	_max_response_field_count(max_num_fields_in_response),
+	_response_field_count(max_num_fields_in_response),
 	_last_result{ (float*)malloc(sizeof(float) * _response_field_count) },
 	_is_init(false),
 	_is_busy(false),
@@ -40,6 +41,9 @@ void AtlasStamp::_clean_wire()
 
 void AtlasStamp::_resize_response_count(uint8_t count)
 {
+	if (count == 0) { count = 1; }
+	else if (count > _max_response_field_count) { count = _max_response_field_count; }
+
 	if (count == _response_field_count)
 	{
 #ifdef ATLAS_DEBUG
@@ -47,7 +51,7 @@ void AtlasStamp::_resize_response_count(uint8_t count)
 #endif
 		return;
 	}
-	if (count == 0) { count = 1; }
+
 #ifdef ATLAS_DEBUG
 	Serial.printf("AtlasStamp::_resize_response_count() reallocated space for sensor readings from[%d] to[%d] floats\n", _response_field_count, count);
 #endif
@@ -361,7 +365,7 @@ float* const AtlasStamp::_parse_sensor_read(void)
 			{
 				//The sensor is suposed to have multiple values, but
 				//thats not true so set the value to default error
-				*(_last_result + i) = -2048.0;
+				*(_last_result + i) = -2048.0f;
 			}
 #ifdef ATLAS_DEBUG
 			Serial.printf("Field[%d] value[%4.2f] current_token[%s]\n", i+1, *(_last_result + i), current_token);
@@ -370,8 +374,16 @@ float* const AtlasStamp::_parse_sensor_read(void)
 	}
 	else
 	{
-		//Is a simple sensor only a float string in the buffer, just set it.
-		*_last_result = atof(_response_buffer);
+		if (strcmp("No output", _response_buffer) == 0)
+		{
+			*_last_result = -2048.0f;
+		}
+		else
+		{
+			//Is a simple sensor only a float string in the buffer, just set it.
+			*_last_result = atof(_response_buffer);
+		}
+
 #ifdef ATLAS_DEBUG
 		Serial.printf("Field[%d] value[%4.2f]\n", 1, *_last_result);
 #endif
