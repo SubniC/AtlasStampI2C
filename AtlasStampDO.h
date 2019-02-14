@@ -18,37 +18,40 @@
 #define ATLAS_SALINITY_UNIT_US 1
 #define ATLAS_SALINITY_UNIT_PPT 2
 
+//TODO: Actualizar metodos antiguos
+
+
+//https://www.atlas-scientific.com/_files/_datasheets/_circuit/DO_EZO_Datasheet_bw.pdf
 class AtlasStampDo : public AtlasStampTemperatureCompensated
 {
 public:
 	explicit AtlasStampDo(byte);
-	float read(void);
-	bool readAsync(void);
-	float resultAsync(void);
-	bool begin(void);
-	char* info(void);
+	
+	//VIRTUAL BASE
+	bool const begin(void);
+	void info(Stream&);
+
 	//Segun la hoja de caraceristicas la presion se puede omitir
 	//si la sonda va a estar a menos de 10m de profundidad
 	//pagina 50
-	bool set_pressure(float,float);
-	bool set_pressure(float);
-	float get_pressure(bool=false);
+	bool const set_pressure(float,float);
+	bool const set_pressure(float);
+	float const get_pressure();
 
-	//Segun la hoja de caraceristicas la salinidas es irrelevante
+	//Segun la hoja de caraceristicas la salinida es irrelevante
 	//si la conductividad es menor de 2500uS
 	//Pagina 49
-	bool set_salinity(float, byte, float);
-	bool set_salinity(float, byte);
-	float get_salinity(bool=false);
+	bool const set_salinity(float, byte, float);
+	bool const set_salinity(float, byte);
+	float const get_salinity();
 
 private:
 	float _current_salinity;
 	float _current_pressure;
-	bool _stampReady();
-	float _parseResult(void);
+	bool const _stamp_ready();
 
-	float _get_pressure(void);
-	float _get_salinity(void);
+	bool const _get_pressure(void);
+	bool const _get_salinity(void);
 
 };
 

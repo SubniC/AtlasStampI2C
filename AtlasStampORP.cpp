@@ -4,92 +4,51 @@
 
 #include "AtlasStampORP.h"
 
-AtlasStampOrp::AtlasStampOrp(byte address) : AtlasStamp(address)
+AtlasStampOrp::AtlasStampOrp(byte address) : 
+	AtlasStamp(address, "mV", 2, -1019.9f, 1019.9f)
+
 {
-	min_value(-1019.9f);
-	max_value(1019.9f);
-	unit("mV");
+	//https://www.atlas-scientific.com/_files/_datasheets/_circuit/ORP_EZO_datasheet.pdf
 }
 
-bool AtlasStampOrp::begin()
+bool const AtlasStampOrp::begin()
 {
 	//Inicialzamos el sensor
-	return  _stampReady();
+	return  _stamp_ready();
 }
 
-float AtlasStampOrp::read()
+bool const AtlasStampOrp::_stamp_ready()
 {
-	byte commandResult = _command(ATLAS_READ_COMAND, 1000);
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
-	{
-		return _parseResult();
-	}
-	//TODO: Afinar codigos de respuesta :)
-	return -2048.0f;
-}
-
-//TODO: se podria mover a la clase base
-bool AtlasStampOrp::readAsync()
-{
-	return _command_async(ATLAS_READ_COMAND, 1000);
-}
-
-float AtlasStampOrp::resultAsync()
-{
-	byte commandResult = _command_result();
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
-	{
-		return _parseResult();
-	}
-	//TODO: Afinar codigos de respuesta :)
-	return -2048.0f;
-}
-
-float AtlasStampOrp::_parseResult()
-{
-	//Tenemos los datos en el buffer :)
-	//Teoricamente el comando READ debe responder con 
-	//una trama del tipo 1,ORP,NULL, 1 es el estado, que no
-	//se almacena en el buffer y null es el final de comando
-	//que tampoco se guarda, asi que ahora el buffer deberia tener un float en string
-	//asi que hacemos
-	return atof(_getBuffer());
-}
-
-
-bool AtlasStampOrp::_stampReady()
-{
-	bool isReady = false;
+	_is_init = false;
 	//El padre controla que este coenctado un dispositivo en la direccion
 	//y que sea un EZO, ya de paso carga _buffer con los datos del comando
 	//INFO asi que sacamos y asignamos la version del sensor :)
-	if (_stampConnected())
+	if (_stamp_connected())
 	{
 		// ORP EZO -> '?I,OR,1.0'   (-> wrong in documentation 'OR' instead of 'ORP')
 		//Comprobamos si es nuestro tipo de sensor :)
-		if (_readBuffer(3) == 'O' && _readBuffer(4) == 'R')
+		if (_read_buffer(3) == 'O' && _read_buffer(4) == 'R')
 		{
 			//No sabemos si llega OR o ORP, de ehcho a mi me llega ORP con el mio
 			//asi que nos curamos en salud
-			if (_readBuffer(5) == 'P')
+			if (_read_buffer(5) == 'P')
 			{
-				stamp_version[0] = _readBuffer(7);
-				stamp_version[1] = _readBuffer(8);
-				stamp_version[2] = _readBuffer(9);
-				stamp_version[3] = _readBuffer(10);
+				stamp_version[0] = _read_buffer(7);
+				stamp_version[1] = _read_buffer(8);
+				stamp_version[2] = _read_buffer(9);
+				stamp_version[3] = _read_buffer(10);
 				stamp_version[4] = '\0';
 			}
 			else
 			{
-				stamp_version[0] = _readBuffer(6);
-				stamp_version[1] = _readBuffer(7);
-				stamp_version[2] = _readBuffer(8);
-				stamp_version[3] = _readBuffer(9);
+				stamp_version[0] = _read_buffer(6);
+				stamp_version[1] = _read_buffer(7);
+				stamp_version[2] = _read_buffer(8);
+				stamp_version[3] = _read_buffer(9);
 				stamp_version[4] = '\0';
 			}
-			isReady = true;
+			_is_init = true;
 		}
 	}
-	_ready(isReady);
-	return isReady;
+	return _is_init;
 }
