@@ -6,7 +6,7 @@
 
 
 AtlasStampPh::AtlasStampPh(uint8_t address) :
-	AtlasStampTemperatureCompensated(address, "PH", 2, 0.001f, 14.000f, 1)
+	AtlasStampTemperatureCompensated(address, "PH", 2, 0.001f, 14.000f)
 
 {
 	//https://www.quora.com/What-is-the-unit-of-measure-for-pH

@@ -5,7 +5,7 @@
 #include "AtlasStampDO.h"
 
 AtlasStampDo::AtlasStampDo(byte address) :
-	AtlasStampTemperatureCompensated(address, "mg/L", 4, 0.01f, 35.99f, 1),
+	AtlasStampTemperatureCompensated(address, "mg/L", 4, 0.01f, 35.99f),
 	_current_pressure(-2048.0f),
 	_current_salinity(-2048.0f)
 {

@@ -5,7 +5,7 @@
 #include "AtlasStampORP.h"
 
 AtlasStampOrp::AtlasStampOrp(byte address) : 
-	AtlasStamp(address, "mV", 2, -1019.9f, 1019.9f, 1)
+	AtlasStamp(address, "mV", 2, -1019.9f, 1019.9f)
 
 {
 	//https://www.atlas-scientific.com/_files/_datasheets/_circuit/ORP_EZO_datasheet.pdf
