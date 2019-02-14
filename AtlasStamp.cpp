@@ -288,34 +288,6 @@ uint8_t AtlasStamp::_raw_command(char* cmd, unsigned long t)
 //	strcpy(localBuffer, _response_buffer);
 //}
 
-char AtlasStamp::_read_buffer(byte pos)
-{
-	if (pos >= 0 && pos <= MAX_DATA_TO_READ)
-	{
-		return _response_buffer[pos];
-	}
-	return 0;
-}
-
-uint8_t AtlasStamp::_bytes_in_buffer()
-{
-	return _i2c_bytes_received;
-}
-
-uint8_t AtlasStamp::address()
-{
-	return _address;
-}
-
-bool AtlasStamp::ready()
-{
-	return _is_init;
-}
-
-bool AtlasStamp::busy()
-{
-	return _is_busy;
-}
 
 float* const AtlasStamp::read()
 {
@@ -391,21 +363,21 @@ float* const AtlasStamp::_parse_sensor_read(void)
 	return _last_result;
 }
 
-void AtlasStamp::_ready(bool isReady)
-{
-	_is_init = isReady;
-}
+//void AtlasStamp::_ready(bool isReady) const
+//{
+//	_is_init = isReady;
+//}
 
-bool AtlasStamp::available()
-{
-	//Si esta ocupado y ademas hemos hecho timeout
-	//devolvemos true, tenemos comando disponible y es momento de obtener el resultado :)
-	if (_is_busy && (_async_comand_ready_by < millis()))
-	{
-		return true;
-	}
-	return false;
-}
+//bool AtlasStamp::available() const
+//{
+//	//Si esta ocupado y ademas hemos hecho timeout
+//	//devolvemos true, tenemos comando disponible y es momento de obtener el resultado :)
+//	if (_is_busy && (_async_comand_ready_by < millis()))
+//	{
+//		return true;
+//	}
+//	return false;
+//}
 
 char* AtlasStamp::_get_response_buffer()
 {
@@ -453,11 +425,6 @@ bool AtlasStamp::_stamp_connected()
 	return false;
 }
 
-char* AtlasStamp::get_unit()
-{
-	return _unit;
-}
-
 void AtlasStamp::purge()
 {
 	_is_busy = false;
@@ -492,15 +459,20 @@ float AtlasStamp::get_vcc(void)
 	return returnVal;
 }
 
-float AtlasStamp::get_min_value()
-{
-	return _min_value;
-}
-
-float AtlasStamp::get_max_value()
-{
-	return _max_value;
-}
+//char* AtlasStamp::get_unit()
+//{
+//	return _unit;
+//}
+//
+//float AtlasStamp::get_min_value()
+//{
+//	return _min_value;
+//}
+//
+//float AtlasStamp::get_max_value()
+//{
+//	return _max_value;
+//}
 
 //void AtlasStamp::unit(char* unit)
 //{
@@ -566,20 +538,14 @@ bool const AtlasStamp::sleep(void)
 	return false;
 }
 
-//TODO: Este metodo no hace falta, cualquier cosa despertara al modulo si esta dormido
-//bool const AtlasStamp::wakeup(void)
-//{
-//	//If already awake return true
-//	if (is_awake)
-//	{
-//		return true;
-//	}
-//
-//	//Send any command to wake up
-//	if (ATLAS_SUCCESS_RESPONSE == _command("L,?", 150))
-//	{
-//		is_awake = true;
-//		return true;
-//	}
-//	return false;
-//}
+//Not necesary because if the module is sleeping will wake up with any command,
+//but I use it to keep the API clean (sleep()/sleeping()/wakeup()) 
+bool const AtlasStamp::wakeup(void)
+{
+	//If already awake return true
+	if (is_awake)
+	{
+		return true;
+	}
+	return led();
+}

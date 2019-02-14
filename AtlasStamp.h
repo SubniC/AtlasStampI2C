@@ -45,7 +45,7 @@
 #define ATLAS_INFO_COMAND "I"
 #define ATLAS_READ_COMAND "R"
 
-
+//http://gcc.gnu.org/onlinedocs/gcc-4.9.4/gcc/Inline.html
 //TODO: terminar de implementar API de atlas
 //TODO: Revisar char* para que todos sean C style strings
 //TODO: _command() y raw_command() se peuden unificar?
@@ -69,28 +69,44 @@ public:
 	//bool protocolLock();
 	//bool protocolLock(bool);
 	
-	//bool const sleep(uint32_t duration); //podemos implementarlo con timeout, 0 para siempre?
 	bool const sleep(void);
-	//bool const wakeup(void); //No parece necesario
-	inline bool const sleeping(void) const __attribute__((always_inline))
+	bool const wakeup(void);
+	inline bool const sleeping(void) const __attribute__((always_inline)){ return !is_awake; }
+	
+	//Get the device address
+	inline  uint8_t const address() const __attribute__((always_inline)) { return _address; }
+	//True if the sensor is inicialized
+	inline  bool const ready() const __attribute__((always_inline)) { return _is_init; }
+	//Async reading synchronization
+	//True if is taking and async read
+	inline bool const busy() const __attribute__((always_inline)) { return _is_busy; }
+
+	//True if we have an async result ready
+	inline bool available() const __attribute__((always_inline))
 	{
-		return !is_awake;
+		if (_is_busy && (_async_comand_ready_by < millis()))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	//Returns unit of the sensor as char array
+	char* const get_unit() const
+	{
+		return _unit;
+	}
+	//Returns the min value of the sensor
+	float const get_min_value() const
+	{
+		return _min_value;
+	}
+	//Returns the max value of the sensor
+	float const get_max_value() const
+	{
+		return _max_value;
 	}
 	
-
-
-	//char* status(void);
-	uint8_t address(); //Get the device address
-	bool ready(); //True if the sensor is inicialized
-	
-	//Async reading synchronization
-	bool busy(); //True if is taking and async read
-	bool available(); //True if we have an async result ready
-
-	//Helpers methods
-	float get_max_value(); //Returns the max value of the sensor
-	float get_min_value(); //Returns the min value of the sensor
-	char* get_unit(); //Returns unit of the sensor as char array
 	void purge(); //Cleans the internal object buffers and state to READY
 
 	//DEBUG METHOS SHOULD NOT BE USED IN PRODUCCTION CODE
@@ -111,7 +127,6 @@ public:
 	inline uint8_t const response_count(void) const { return _response_field_count; }
 
 protected:
-
 	//TODO: Esto no es igual en todas las clases? solo para sacar la version? no se podria hacer en la conexion?
 	//y eliminamos esta fucnion de las clases derivadas? ademas eso permitira crear objetos "base" AtlasStamp compatibles
 	//con cualquier modulo o no?
@@ -126,9 +141,18 @@ protected:
 	void _ready(bool); //Fija el valor de _is_init, NECESARIO?
 
 	char* _get_response_buffer();
-	char _read_buffer(uint8_t);
+
+	inline char const _read_buffer(uint8_t pos) const __attribute__((always_inline))
+	{
+		if (pos >= 0 && pos <= MAX_DATA_TO_READ)
+		{
+			return _response_buffer[pos];
+		}
+		return 0;
+	}
+
 	void _clean_buffer(void);
-	uint8_t _bytes_in_buffer(void);
+	inline uint8_t const _bytes_in_buffer() const  __attribute__((always_inline)) { return _i2c_bytes_received; }
 
 	uint8_t _command(char *, unsigned long);
 	uint8_t _raw_command(char *, unsigned long);
@@ -137,6 +161,9 @@ protected:
 
 	uint8_t _address;
 	char stamp_version[5];
+
+	//Inicialization require part of the work here and part in child class so we need the flag protected	
+	bool _is_init;
 
 	void _resize_response_count(uint8_t = 1);
 	/*
@@ -153,16 +180,14 @@ private:
 	float* _last_result;
 	char* _unit;
 
-
 	uint8_t _i2c_bytes_received;
-	bool _is_init;
 	bool _is_busy;
-	float _max_value;
-	float _min_value;
+	const float _max_value;
+	const float _min_value;
 	unsigned long _async_comand_ready_by;
 	
 	uint8_t _response_field_count; //TODO: no tocar directamente solo por medio del constructor o la funcion _resize_response_count()
-	uint8_t _max_response_field_count; //Maximo numero de campos de respuesta que puede tener el sensor
+	const uint8_t _max_response_field_count; //Maximo numero de campos de respuesta que puede tener el sensor
 
 	void _clean_wire(void);
 };

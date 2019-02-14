@@ -148,7 +148,7 @@ bool const AtlasStampEc::begin()
 //TODO: revisar de aquí hacia abajo
 bool const AtlasStampEc::_stamp_ready()
 {
-	bool isReady = false;
+	_is_init = false;
 	//El padre controla que este coenctado un dispositivo en la direccion
 	//y que sea un EZO, ya de paso carga _response_buffer con los datos del comando
 	//INFO asi que sacamos y asignamos la version del sensor :)
@@ -163,11 +163,10 @@ bool const AtlasStampEc::_stamp_ready()
 			stamp_version[2] = _read_buffer(8);
 			stamp_version[3] = _read_buffer(9);
 			stamp_version[4] = 0;
-			isReady = true;
+			_is_init = true;
 		}
 	}
-	_ready(isReady);
-	return isReady;
+	return _is_init;
 }
 
 float AtlasStampEc::get_k()
