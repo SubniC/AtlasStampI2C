@@ -140,13 +140,16 @@ bool const AtlasStampDo::_load_pressure()
 	{
 		//En el buffer tendremos:
 		// ? | P | , | 9 | 0 | . | 2 | 5 | null
-		char* res_buff = (char*)(_get_response_buffer() + 3);
-		_current_pressure = atof(res_buff);
+		if (_bytes_in_buffer() >= 6)
+		{
+			char* res_buff = (char*)(_get_response_buffer() + 3);
+			_current_pressure = atof(res_buff);
 
 #ifdef ATLAS_DEBUG_DO
-		Serial.printf("DO: _load_pressure() buffer[%s] current float[%4.2f]\n", res_buff, _current_pressure);
+			Serial.printf("DO: _load_pressure() buffer[%s] current float[%4.2f]\n", res_buff, _current_pressure);
 #endif
-		return true;
+			return true;
+		}
 	}
 	return false;
 }
