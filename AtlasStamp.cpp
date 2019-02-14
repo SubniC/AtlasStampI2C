@@ -69,8 +69,11 @@ bool AtlasStamp::_command_async(char* cmd, unsigned long t)
 		//used to calculate if the result should be available
 		_async_comand_ready_by = millis() + t;
 
+		//Reset the bufer and read counter
+		_clean_buffer();
+
 #ifdef ATLAS_DEBUG
-		Serial.printf("AtlasStamp::_command_async() [END] T:[%d] BUSY [%d] TIMEOUT [%d] RESPONSE [%d] COMMAND [%s]\n", millis(), _is_busy, _async_comand_ready_by, wireres, cmd);
+		Serial.printf("AtlasStamp::_command_async() [END] T[%d] BUSY[%d] READY_BY[%d] SUCCSED[%d] COMMAND[%s]\n", millis(), _is_busy, _async_comand_ready_by, wireres, cmd);
 #endif
 		//Si hemos procesado correctamente un comando y el cacharro estaba dormido se habra despertado,
 		//así que fijamos el flag, ojo, cuando lleguemos aqui despues de enviar el comando Sleep el flag
@@ -83,8 +86,6 @@ bool AtlasStamp::_command_async(char* cmd, unsigned long t)
 	{
 		return false;
 	}
-
-
 }
 
 //Obtiene el resultado de un comando asincrono
@@ -106,7 +107,7 @@ uint8_t AtlasStamp::_command_result()
 		return ATLAS_BUSY_RESPONSE;
 	}
 
-	_clean_buffer();								//Limpiamos el buffer
+	/*_clean_buffer();*/								//Limpiamos el buffer
 
 	//Nos aseguramos de que esta listo antes de seguir :)
 	while (_i2c_response_code == ATLAS_BUSY_RESPONSE) {
@@ -155,7 +156,7 @@ uint8_t AtlasStamp::_command_result()
 	_async_comand_ready_by = 0;
 
 #ifdef ATLAS_DEBUG
-	Serial.printf("AtlasStamp::_command_result() [END] T:[%d] RESPONSE [%d] BUSY [%d] TIMEOUT [%d]\n", millis(), _i2c_response_code, _is_busy, _async_comand_ready_by);
+	Serial.printf("AtlasStamp::_command_result() [END] T[%d] BUSY[%d] CODE[%d] RESPONSE[%s] TIMEOUT[%d]\n", millis(), _is_busy, _i2c_response_code, _response_buffer, _async_comand_ready_by);
 #endif
 
 	//Devolvemos el codigo de respuesta :)
@@ -287,7 +288,7 @@ bool AtlasStamp::_stamp_connected()
 	if (_is_init) { return true; }
 
 	//Temporary set the flag to allow the initial contact
-	//otherways the _command() function won return ATLAS_SUCCESS_RESPONSE
+	//otherways the _command() function wont return ATLAS_SUCCESS_RESPONSE
 	_is_init = true;
 
 	for (int i = 0; i < MAX_CONNECTION_TRIES; i++)
@@ -305,44 +306,38 @@ bool AtlasStamp::_stamp_connected()
 		}
 		delay(CONNECTION_DELAY_MS);
 	}
-	//Clear the flag, is the child class the one that should activate it
+	//Clear the flag, is the child class the one that should set it
 	//when more info about the module is parsed
 	_is_init = false;
-	//Return r, it contains true if we could stablish communication with an EZO module in the given address
+	//Return r, it contains true if we could stablish communication 
+	//with an EZO module in the given address
 	return r;
 }
 
 void AtlasStamp::purge()
 {
+	//TODO: deberia esperar a que termine lo que este haciendo si
+	//hay trabajo a medio?
 	_is_busy = false;
 	_async_comand_ready_by = 0;
 }
 
 float AtlasStamp::get_vcc(void)
 {
-	float returnVal = -2048.0f;
+	//float returnVal = -2048.0f;
 	if (ATLAS_SUCCESS_RESPONSE == _command("Status", 200))
 	{
-		//Una vez qui tenemos en el bufer algo asi (las | separan, no cuentan como caracter en el buffer)
 		//?|S|T|A|T|U|S|,|P|,|5|.|0|6|4|NULL
-		//TODO: http://stackoverflow.com/questions/32822988/get-the-last-token-of-a-string-in-c
-		if (_read_buffer(9) == ',' && _i2c_bytes_received > 10)
+		//TODO: Deberiamos proteger estas lecturas con punteros con algo del tipo? if (_bytes_in_buffer() >= 10) {...}
+		//En este caso el atof mirara los bytes que considere y si el resultado no es correcto devolvera 0.0f asi que por ahí no parece
+		//haber problemas, ademas no deberia pasar ya que si command() devuelve exito, deberia estar cargado el buffer...
+		if (_bytes_in_buffer() >= 13)
 		{
-			for (int i = 10; i < _i2c_bytes_received; i++)
-			{
-				if (_read_buffer(i) != NULL_CHARACTER)
-				{
-					_command_buffer[i - 10] = _read_buffer(i);
-				}
-				else
-				{
-					_command_buffer[i - 10] = '\0';
-				}
-			}
-			returnVal = atof(_command_buffer);
+			char* res_buff = (char*)(_get_response_buffer() + 10);
+			return atof(res_buff);
 		}
 	}
-	return returnVal;
+	return -2048.0f;
 }
 
 

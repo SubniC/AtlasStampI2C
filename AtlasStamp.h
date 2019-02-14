@@ -50,6 +50,7 @@
 //http://gcc.gnu.org/onlinedocs/gcc-4.9.4/gcc/Inline.html
 //TODO: terminar de implementar API de atlas
 //TODO: destructores
+//TODO: un perfilador basico apra saber loq ue tarda realmente en una peticion asincrona (iniciarla + recuperar el valor)
 class AtlasStamp
 {
 public:
@@ -119,7 +120,7 @@ public:
 	float* const read(void);
 	bool const read_async(void);
 	float* const result_async(void);
-
+	//La verison ascii es 22us mas rapida que la version float en sincrono con el modulo de ec
 	uint8_t read_ascii(char*);
 	uint8_t result_ascii_async(char*);
 

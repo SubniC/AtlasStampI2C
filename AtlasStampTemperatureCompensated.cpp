@@ -23,13 +23,16 @@ bool const AtlasStampTemperatureCompensated::_load_temperature()
 	{
 		//En el buffer tendremos:
 		// ? | T | , | 1 | 9 | . | 5 | null
-		char* res_buff = (char*)(_get_response_buffer() + 3);
-		_current_temperature = atof(res_buff);
+		if (_bytes_in_buffer() >= 5)
+		{
+			char* res_buff = (char*)(_get_response_buffer() + 3);
+			_current_temperature = atof(res_buff);
 
 #ifdef ATLAS_DEBUG
-		Serial.printf("AtlasStampTemperatureCompensated::temperature buffer [%s] current float [%4.2f]\n", res_buff, _current_temperature);
+			Serial.printf("AtlasStampTemperatureCompensated::temperature buffer [%s] current float [%4.2f]\n", res_buff, _current_temperature);
 #endif
-		return true;
+			return true;
+		}
 	}
 	return false;
 }
