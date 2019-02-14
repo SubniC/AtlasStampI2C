@@ -5,7 +5,7 @@
 #include "AtlasStampEC.h"
 
 AtlasStampEc::AtlasStampEc(byte address) : 
-	AtlasStampTemperatureCompensated(address, "uS/cm", 5, 0.07f, 500000.0f, 4)
+	AtlasStampTemperatureCompensated(address, "uS/cm", 5, 0.07f, 500000.0f)
 {
 }
 
@@ -29,10 +29,12 @@ bool const AtlasStampEc::set_output_parameter(Parameters type, bool value)
 		if (value)
 		{
 			_parameter_state |= type;
+			_resize_response_count(response_count()+1);
 		}
 		else
 		{
 			_parameter_state &= ~type;
+			_resize_response_count(response_count() - 1);
 		}
 
 #ifdef ATLAS_DEBUG_EC
@@ -60,6 +62,7 @@ bool const AtlasStampEc::_load_parameters()
 		if (strcmp(res_buff, "No output") == 0)
 		{
 			_parameter_state = 0;
+			_resize_response_count(0);
 #ifdef ATLAS_DEBUG_EC
 			Serial.println("EC: All output disabled for EC module...\n");
 #endif
@@ -69,11 +72,13 @@ bool const AtlasStampEc::_load_parameters()
 			//http://www.cplusplus.com/reference/cstring/strtok/?kw=strtok
 			char *current_token;
 			current_token = strtok(res_buff, ",");
+			uint8_t _new_count = 0;
 			while (current_token != NULL)
 			{
 				if (strcmp("EC", current_token) == 0)
 				{
 					_parameter_state |= Parameters::EC;
+					_new_count++;
 #ifdef ATLAS_DEBUG_EC
 					Serial.println("EC: EC output enabled");
 #endif
@@ -81,6 +86,7 @@ bool const AtlasStampEc::_load_parameters()
 				else if (strcmp("TDS", current_token) == 0)
 				{
 					_parameter_state |= Parameters::TDS;
+					_new_count++;
 #ifdef ATLAS_DEBUG_EC
 					Serial.println("EC: TDS output enabled");
 #endif
@@ -88,6 +94,8 @@ bool const AtlasStampEc::_load_parameters()
 				else if(strcmp("S", current_token) == 0)
 				{
 					_parameter_state |= Parameters::S;
+					_new_count++;
+
 #ifdef ATLAS_DEBUG_EC
 					Serial.println("EC: S output enabled");
 #endif
@@ -95,6 +103,7 @@ bool const AtlasStampEc::_load_parameters()
 				else if(strcmp("SG", current_token) == 0)
 				{
 					_parameter_state |= Parameters::SG;
+					_new_count++;
 #ifdef ATLAS_DEBUG_EC
 					Serial.println("EC: SG output enabled");
 #endif
@@ -107,6 +116,7 @@ bool const AtlasStampEc::_load_parameters()
 #endif
 				current_token = strtok(NULL, ",");
 			}
+			_resize_response_count(_new_count);
 		}
 		return true;
 	}

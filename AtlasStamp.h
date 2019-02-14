@@ -66,13 +66,18 @@ public:
 
 	bool led();
 	bool led(bool);
-	//bool is_led_on();
 	//bool protocolLock();
 	//bool protocolLock(bool);
 	
+	//bool const sleep(uint32_t duration); //podemos implementarlo con timeout, 0 para siempre?
 	bool const sleep(void);
-	bool const wakeup(void);
-	bool const sleeping(void) const;
+	//bool const wakeup(void); //No parece necesario
+	inline bool const sleeping(void) const __attribute__((always_inline))
+	{
+		return !is_awake;
+	}
+	
+
 
 	//char* status(void);
 	uint8_t address(); //Get the device address
@@ -132,8 +137,8 @@ protected:
 
 	uint8_t _address;
 	char stamp_version[5];
-	uint8_t _response_field_count;
 
+	void _resize_response_count(uint8_t = 1);
 	/*
 	Commandos asincronos
 	*/
@@ -156,8 +161,10 @@ private:
 	float _min_value;
 	unsigned long _async_comand_ready_by;
 	
-	void _clean_wire(void);
+	uint8_t _response_field_count; //TODO: no tocar directamente solo por medio del constructor o la funcion _resize_response_count()
 
+
+	void _clean_wire(void);
 };
 
 #endif

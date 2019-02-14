@@ -38,6 +38,23 @@ void AtlasStamp::_clean_wire()
 	while (Wire.available()) { Wire.read(); }
 }
 
+void AtlasStamp::_resize_response_count(uint8_t count)
+{
+	if (count == _response_field_count)
+	{
+#ifdef ATLAS_DEBUG
+		Serial.printf("AtlasStamp::_resize_response_count() cant reallocate, already have [%d] fields\n", _response_field_count);
+#endif
+		return;
+	}
+	if (count == 0) { count = 1; }
+#ifdef ATLAS_DEBUG
+	Serial.printf("AtlasStamp::_resize_response_count() reallocated space for sensor readings from[%d] to[%d] floats\n", _response_field_count, count);
+#endif
+	_response_field_count = count;
+	_last_result = (float*)realloc(_last_result, sizeof(float) * _response_field_count);
+}
+
 /// <summary>
 /// Inicia un comando asincrono
 /// </summary>
@@ -243,6 +260,12 @@ uint8_t AtlasStamp::_raw_command(char* cmd, unsigned long t)
 				//TODO: Controlar aquí el buffer overflow!
 			}
 		}
+		//Si hemos procesado correctamente un comando y el cacharro estaba dormido se habra despertado,
+		//así que fijamos el flag, ojo, cuando lleguemos aqui despues de enviar el comando Sleep el flag
+		//se pondra a true, estando realmente dormido el modulo, pero no es problema, ya que al salir y
+		//volver a la funcion sleep() se pone a false
+		is_awake = true;
+
 	}
 	//Esto es necesario si no queremos que se cuelgue el i2c
 	//Tenemos que limpiar los datos del buffer antes de volver a usar el bus
@@ -531,24 +554,20 @@ bool const AtlasStamp::sleep(void)
 	return false;
 }
 
-bool const AtlasStamp::wakeup(void)
-{
-	//If already awake return true
-	if (is_awake)
-	{
-		return true;
-	}
-
-	//Send any command to wake up
-	if (ATLAS_SUCCESS_RESPONSE == _command("L,?", 150))
-	{
-		is_awake = true;
-		return true;
-	}
-	return false;
-}
-
-bool const AtlasStamp::sleeping(void) const
-{
-	return is_awake;
-}
+//TODO: Este metodo no hace falta, cualquier cosa despertara al modulo si esta dormido
+//bool const AtlasStamp::wakeup(void)
+//{
+//	//If already awake return true
+//	if (is_awake)
+//	{
+//		return true;
+//	}
+//
+//	//Send any command to wake up
+//	if (ATLAS_SUCCESS_RESPONSE == _command("L,?", 150))
+//	{
+//		is_awake = true;
+//		return true;
+//	}
+//	return false;
+//}
