@@ -15,41 +15,68 @@
 #define ATLAS_DEBUG_EC
 #endif
 
-//#define ATLAS_DEBUG_EC
+//TODO: En funcion de los parametros que tengmaos activos para la salida deberiamos cal
+//cular el el valor de _response_field_count ojo que cuando cambie tendremos que "reasignar" 
+//la memoria para los resultados que se reserva en el constructor
 
+//TODO: Falta optimizar las funciones antiguas de set/get_k
 
-#define ATLAS_EC_RESPONSE_LENGTH 4
-
+//DATASHEET: https://www.atlas-scientific.com/_files/_datasheets/_circuit/ec_EZO_datasheet.pdf
 class AtlasStampEc : public AtlasStampTemperatureCompensated
 {
 public:
+	enum Parameters{
+		EC  = 1 << 0,
+		TDS = 1 << 1,
+		S   = 1 << 2,
+		SG  = 1 << 3,
+	};
+
 	explicit AtlasStampEc(byte);
-	float* read(void);
-	bool readAsync(void);
-	float* resultAsync(void);
-	bool begin(void);
-	char* info(void);
+
+	bool const begin(void);
+	void info(Stream&);
 	//TODO: Guardar localmente la ultima K recuperada/fijada
 	//que no tengamos que preguntarle al stamp cada vez
 	bool set_k(float);
 	float get_k(void);
+	
+	bool const set_output_parameter(Parameters, bool);
+	bool const get_output_parameter(Parameters);
 
-	//Obtiene la ultima medida que se tomo
-	//con cada llamada a read o resultAsync se actualiza.
-	//TODO: para virtualizar en AtlasStamp
-	float* last(void);
 
 private:
-	//TODO: si funciona bien esto de poner el _parsedResult en la clase podriamos tener
-	//todas als funciones con float* de retorno y asi mover _parsedResult a AtlasStamp y
-	//hacer virtuales read, readasync, resultAsync... ya que tendriamos la misma respuesta en todas
-	//las funciones, eso si, necesitariamos que cada clase hija de AtlasStamp permitiera saber
-	//cuantos elementos tiene en su respuesta
-	//TODO2: Lo hemos probado y funciona estupendamente, tenemos que implementar este modelo en las demas clases
-	//y virtualizar los metodos de lectura
-	float _parsedResult[ATLAS_EC_RESPONSE_LENGTH];
-	bool _stampReady();
-	void _parseResult();
+	uint8_t _parameter_state = 0;
+
+	bool const _load_parameters();
+
+	bool const _stamp_ready();
+
+	inline char* parameter_to_char(Parameters p) __attribute__((always_inline))
+	{
+		switch(p)
+		{
+			case Parameters::EC:
+				return "EC";
+				break;
+
+			case Parameters::TDS:
+				return "TDS";
+				break;
+
+			case Parameters::S:
+				return "S";
+				break;
+
+			case Parameters::SG:
+				return "SG";
+				break;
+
+			default:
+				return nullptr;
+		}
+
+	}
 };
 
 

@@ -4,19 +4,20 @@
 
 #include "AtlasStampPH.h"
 
-AtlasStampPh::AtlasStampPh(byte address) : AtlasStampTemperatureCompensated(address)
+
+AtlasStampPh::AtlasStampPh(uint8_t address) :
+	AtlasStampTemperatureCompensated(address, "PH", 2, 0.001f, 14.000f)
+
 {
-	min_value(0.001f);
-	max_value(14.000f);
-	unit("PH");
+	//https://www.quora.com/What-is-the-unit-of-measure-for-pH
 }
 
-bool AtlasStampPh::begin()
+bool const AtlasStampPh::begin()
 {
 	//Inicialzamos el sensor
-	if (_stampReady())
+	if (_stamp_ready())
 	{
-		//Fijamos la recuperamos la temperatura actual
+		//Force initial reading of stored temperature value
 		_get_temperature();
 		return true;
 	}
@@ -24,65 +25,26 @@ bool AtlasStampPh::begin()
 	
 }
 
-float AtlasStampPh::read()
-{
-	byte commandResult = _command(ATLAS_READ_COMAND, 1000);
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
-	{
-		return _parseResult();
-	}
-	//TODO: Afinar codigos de respuesta :)
-	return -2048.0f;
-}
 
-bool AtlasStampPh::readAsync()
+bool const AtlasStampPh::_stamp_ready()
 {
-	return _command_async(ATLAS_READ_COMAND, 1000);
-}
-
-float AtlasStampPh::resultAsync()
-{
-	byte commandResult = _command_result();
-	if (ATLAS_SUCCESS_RESPONSE == commandResult)
-	{
-		return _parseResult();
-	}
-	//TODO: Afinar codigos de respuesta :)
-	return -2048.0f;
-}
-
-float AtlasStampPh::_parseResult()
-{
-	//Tenemos los datos en el buffer :)
-	//Teoricamente el comando READ debe responder con 
-	//una trama del tipo 1,PH,NULL, 1 es el estado, que no
-	//se almacena en el buffer y null es el final de comando
-	//que tampoco se guarda, asi que ahora el buffer deberia tener un float en string
-	//asi que hacemos
-	return atof(_getBuffer());
-}
-
-
-bool AtlasStampPh::_stampReady()
-{
-	bool isReady = false;
+	_is_init = false;
 	//El padre controla que este coenctado un dispositivo en la direccion
-	//y que sea un EZO, ya de paso carga _buffer con los datos del comando
+	//y que sea un EZO, ya de paso carga _response_buffer con los datos del comando
 	//INFO asi que sacamos y asignamos la version del sensor :)
-	if (_stampConnected())
+	if (_stamp_connected())
 	{
 		// PH EZO  -> '?I,pH,1.1'
 		//Comprobamos si es nuestro tipo de sensor :)
-		if (_readBuffer(3) == 'p' && _readBuffer(4) == 'H')
+		if (_read_buffer(3) == 'p' && _read_buffer(4) == 'H')
 		{
-			stamp_version[0] = _readBuffer(6);
-			stamp_version[1] = _readBuffer(7);
-			stamp_version[2] = _readBuffer(8);
-			stamp_version[3] = _readBuffer(9);
+			stamp_version[0] = _read_buffer(6);
+			stamp_version[1] = _read_buffer(7);
+			stamp_version[2] = _read_buffer(8);
+			stamp_version[3] = _read_buffer(9);
 			stamp_version[4] = '\0';
-			isReady = true;
+			_is_init = true;
 		}
 	}
-	_ready(isReady);
-	return isReady;
+	return _is_init;
 }

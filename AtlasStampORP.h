@@ -19,13 +19,12 @@ class AtlasStampOrp : public AtlasStamp
 {
 public:
 	explicit AtlasStampOrp(byte);
-	float read(void);
-	bool readAsync(void);
-	float resultAsync(void);
-	bool begin(void);
+
+	bool const begin(void);
+
+
 private:
-	bool _stampReady();
-	float _parseResult(void);
+	bool const _stamp_ready();
 };
 
 #endif
