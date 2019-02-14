@@ -123,10 +123,9 @@ bool const AtlasStampEc::_load_parameters()
 	return false;
 }
 
-char* const AtlasStampEc::info()
+void AtlasStampEc::info(Stream& output)
 {
-	sprintf(_infoBuffer, "ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f] K:[%4.2f]", _address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(), get_vcc(), get_k());
-	return _infoBuffer;
+	output.printf("ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f] K:[%4.2f]", _address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(), get_vcc(), get_k());
 }
 
 bool const AtlasStampEc::begin()

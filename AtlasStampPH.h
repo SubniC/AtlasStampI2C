@@ -26,6 +26,7 @@ public:
 	bool const begin(void);
 
 	//PH
+	//TODO: Implementar
 	float* slope(void);
 
 
