@@ -7,10 +7,9 @@ AtlasStampTemperatureCompensated::AtlasStampTemperatureCompensated(uint8_t addre
 }
 
 
-char* const AtlasStampTemperatureCompensated::info()
+void AtlasStampTemperatureCompensated::info(Stream& output)
 {
-	sprintf(_infoBuffer, "ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f]",_address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), _current_temperature, get_vcc());
-	return _infoBuffer;
+	output.printf("ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f]",_address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), _current_temperature, get_vcc());
 }
 
 float const AtlasStampTemperatureCompensated::get_temperature()

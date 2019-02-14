@@ -27,8 +27,9 @@ class AtlasStampDo : public AtlasStampTemperatureCompensated
 public:
 	explicit AtlasStampDo(byte);
 	
+	//VIRTUAL BASE
 	bool const begin(void);
-	char* const info(void);
+	void info(Stream&);
 
 	//Segun la hoja de caraceristicas la presion se puede omitir
 	//si la sonda va a estar a menos de 10m de profundidad

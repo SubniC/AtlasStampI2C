@@ -21,7 +21,7 @@ public:
 	explicit AtlasStampTemperatureCompensated (uint8_t, char*, uint8_t, float, float, uint8_t = 1);
 	
 	//BASE
-	char* const info(void);
+	void info(Stream&);
 
 	//Temperature API	
 	bool const set_temperature(float);

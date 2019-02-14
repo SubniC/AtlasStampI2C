@@ -11,15 +11,14 @@ AtlasStampDo::AtlasStampDo(byte address) :
 {
 }
 
-char* const AtlasStampDo::info()
+void AtlasStampDo::info(Stream& output)
 {
-	sprintf(_infoBuffer, "ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f] PRESSURE:[%4.2f] SALINITY:[%4.2f]", _address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(), get_vcc(), _current_pressure, _current_salinity);
-	return _infoBuffer;
+	output.printf("ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f] PRESSURE:[%4.2f] SALINITY:[%4.2f]", _address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(), get_vcc(), _current_pressure, _current_salinity);
 }
 
 bool const AtlasStampDo::begin()
 {
-	//Inicialzamos el sensor
+	//Sensor inicialization and data sync
 	if (_stamp_ready())
 	{
 		//Recuperamos la temperatura, presion y salinidad actuales

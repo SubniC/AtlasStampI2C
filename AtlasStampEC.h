@@ -35,7 +35,7 @@ public:
 	explicit AtlasStampEc(byte);
 
 	bool const begin(void);
-	char* const info(void);
+	void info(Stream&);
 	//TODO: Guardar localmente la ultima K recuperada/fijada
 	//que no tengamos que preguntarle al stamp cada vez
 	bool set_k(float);

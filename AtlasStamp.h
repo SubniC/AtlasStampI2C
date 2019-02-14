@@ -11,7 +11,7 @@
 
 #include <Wire.h>  
 
-#define ATLAS_DEBUG
+//#define ATLAS_DEBUG
 
 #define ATLAS_SENSOR_PH 1
 #define ATLAS_SENSOR_ORP 2
@@ -27,9 +27,11 @@
 #define ATLAS_BUSY_RESPONSE 254
 #define ATLAS_NODATA_RESPONSE 255
 #define NULL_CHARACTER 0
+#define I2C_RESPONSE_OK 0
+
 
 #define MAX_CONNECTION_TRIES 3
-#define CONNECTION_DELAY_MS 100
+#define CONNECTION_DELAY_MS 250
 
 // example:
 // PH EZO  -> '?I,pH,1.1'
@@ -62,7 +64,7 @@ public:
 	//bool factoryReset(void);
 	float get_vcc(void);
 
-	virtual char* const info(void);
+	virtual void info(Stream&);
 
 	bool led();
 	bool led(bool);
@@ -136,11 +138,10 @@ protected:
 	
 	char _command_buffer[32];
 
-	//TODO: no es necesario, hacer otra cosa
-	char _infoBuffer[256]; //Necesario?
-	void _ready(bool); //Fija el valor de _is_init, NECESARIO?
-
-	char* _get_response_buffer();
+	inline char* _get_response_buffer() __attribute__((always_inline))
+	{
+		return _response_buffer;
+	}
 
 	inline char const _read_buffer(uint8_t pos) const __attribute__((always_inline))
 	{
@@ -151,11 +152,15 @@ protected:
 		return 0;
 	}
 
-	void _clean_buffer(void);
+	inline void _clean_buffer() __attribute__((always_inline))
+	{
+		_response_buffer[0] = 0;
+		_i2c_bytes_received = 0;
+	}
+
 	inline uint8_t const _bytes_in_buffer() const  __attribute__((always_inline)) { return _i2c_bytes_received; }
 
 	uint8_t _command(char *, unsigned long);
-	uint8_t _raw_command(char *, unsigned long);
 	
 	bool _stamp_connected(void);
 
@@ -189,7 +194,7 @@ private:
 	uint8_t _response_field_count; //TODO: no tocar directamente solo por medio del constructor o la funcion _resize_response_count()
 	const uint8_t _max_response_field_count; //Maximo numero de campos de respuesta que puede tener el sensor
 
-	void _clean_wire(void);
+	inline void _clean_wire() __attribute__((always_inline)) { while (Wire.available()) { Wire.read(); } }
 };
 
 #endif
