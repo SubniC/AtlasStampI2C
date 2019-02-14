@@ -13,18 +13,18 @@ AtlasStampDo::AtlasStampDo(byte address) :
 
 void AtlasStampDo::info(Stream& output)
 {
-	output.printf("ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f] PRESSURE:[%4.2f] SALINITY:[%4.2f]", _address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(), get_vcc(), _current_pressure, _current_salinity);
+	output.printf("ADDRESS:[0x%02x] VERSION:[%s] READY:[%d] BUSY:[%d] MIN:[%4.3f] MAX:[%4.3f] UNIT:[%s] TMP:[%4.2f] VCC:[%4.4f] PRESSURE:[%4.2f] SALINITY:[%4.2f]\n", _address, stamp_version, ready(), busy(), get_min_value(), get_max_value(), get_unit(), get_temperature(), get_vcc(), _current_pressure, _current_salinity);
 }
 
 bool const AtlasStampDo::begin()
 {
-	//Sensor inicialization and data sync
+	//Module inicialization and data sync
 	if (_stamp_ready())
 	{
-		//Recuperamos la temperatura, presion y salinidad actuales
-		_get_temperature();
-		_get_pressure();
-		_get_salinity();
+		//Recover temperature, presure and salinity parameters from the module
+		_load_temperature();
+		_load_pressure();
+		_load_salinity();
 		return true;
 	}
 	return false;
@@ -68,7 +68,7 @@ float const AtlasStampDo::get_salinity()
 	return _current_salinity;
 }
 
-bool const AtlasStampDo::_get_salinity()
+bool const AtlasStampDo::_load_salinity()
 {
 	if (ATLAS_SUCCESS_RESPONSE == _command("S,?", 300))
 	{
@@ -76,15 +76,10 @@ bool const AtlasStampDo::_get_salinity()
 		// ? | S | , | 50000 | , | uS | null
 		// o
 		// ? | S | , | 37.5 | , | ppt | null
-		//pero no sabemos exactamente cuandos caracteres son la temperatura
-		//asi que lo haremos entre el que sabemos que es el primero y NULL
-		//recorremos el buffer
 		byte byteFromBuffer = 0;
-		//char tmpBuffer[12] = { 0 };
 		for (int i = 3; i < _bytes_in_buffer(); i++)
 		{
 			byteFromBuffer = _read_buffer(i);
-			//Al encontrar la , hemos terminado :)
 			if (',' == byteFromBuffer)
 			{
 				_command_buffer[i - 3] = '\0';
@@ -92,12 +87,10 @@ bool const AtlasStampDo::_get_salinity()
 			}
 			_command_buffer[i - 3] = byteFromBuffer;
 		}
-		//Despues del bucle debemos tener en tmpTemperature la cadena con el 
-		//numero para pasarselo a ATOF
 		_current_salinity = atof(_command_buffer);
 
 #ifdef ATLAS_DEBUG_DO
-		Serial.printf("DO: _get_salinity() buffer[%s] current float[%4.2f]\n", _command_buffer, _current_salinity);
+		Serial.printf("DO: _load_salinity() buffer[%s] current float[%4.2f]\n", _command_buffer, _current_salinity);
 #endif
 		return true;
 	}
@@ -141,7 +134,7 @@ float const AtlasStampDo::get_pressure()
 	return _current_pressure;
 }
 
-bool const AtlasStampDo::_get_pressure()
+bool const AtlasStampDo::_load_pressure()
 {
 	if (ATLAS_SUCCESS_RESPONSE == _command("P,?", 300))
 	{
@@ -151,7 +144,7 @@ bool const AtlasStampDo::_get_pressure()
 		_current_pressure = atof(res_buff);
 
 #ifdef ATLAS_DEBUG_DO
-		Serial.printf("DO: _get_pressure() buffer[%s] current float[%4.2f]\n", res_buff, _current_pressure);
+		Serial.printf("DO: _load_pressure() buffer[%s] current float[%4.2f]\n", res_buff, _current_pressure);
 #endif
 		return true;
 	}

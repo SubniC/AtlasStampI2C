@@ -28,7 +28,7 @@ public:
 	bool const set_temperature(float,float);
 	float const get_temperature();
 protected:
-	bool const _get_temperature(void); //Actual read from stamp module
+	bool const _load_temperature(void); //Actual read from stamp module
 private:
 	float _current_temperature; //Local cached temperature value
 };

@@ -49,9 +49,7 @@
 
 //http://gcc.gnu.org/onlinedocs/gcc-4.9.4/gcc/Inline.html
 //TODO: terminar de implementar API de atlas
-//TODO: Revisar char* para que todos sean C style strings
-//TODO: _command() y raw_command() se peuden unificar?
-//TODO: Cambio dinamico de _num_fields_response
+//TODO: destructores
 class AtlasStamp
 {
 public:
@@ -111,10 +109,6 @@ public:
 	
 	void purge(); //Cleans the internal object buffers and state to READY
 
-	//DEBUG METHOS SHOULD NOT BE USED IN PRODUCCTION CODE
-	//uint8_t raw_command(char*, unsigned long);
-	//void raw_response(char*);
-
 	//Virtual methods, not using pure virtual here to optimize program memory with pic32 compiler
 	//more here: http://chipkit.net/efficient-cplus-plus/
 	//http://www.learncpp.com/cpp-tutorial/126-pure-virtual-functions-abstract-base-classes-and-interface-classes/
@@ -126,8 +120,10 @@ public:
 	bool const read_async(void);
 	float* const result_async(void);
 
-	inline uint8_t const response_count(void) const { return _response_field_count; }
+	uint8_t read_ascii(char*);
+	uint8_t result_ascii_async(char*);
 
+	inline uint8_t const response_count(void) const { return _response_field_count; }
 protected:
 	//TODO: Esto no es igual en todas las clases? solo para sacar la version? no se podria hacer en la conexion?
 	//y eliminamos esta fucnion de las clases derivadas? ademas eso permitira crear objetos "base" AtlasStamp compatibles
@@ -154,7 +150,7 @@ protected:
 
 	inline void _clean_buffer() __attribute__((always_inline))
 	{
-		_response_buffer[0] = 0;
+		_response_buffer[0] = '\0';
 		_i2c_bytes_received = 0;
 	}
 
@@ -171,9 +167,7 @@ protected:
 	bool _is_init;
 
 	void _resize_response_count(uint8_t = 1);
-	/*
-	Commandos asincronos
-	*/
+
 	bool _command_async(char *, unsigned long);
 	uint8_t _command_result();
 
