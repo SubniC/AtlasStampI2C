@@ -1,6 +1,6 @@
 #include "AtlasStamp.h"
 
-
+//TODO: Parametro unit_len deprecated? se peude cambiar en el malloc por strlen()?
 AtlasStamp::AtlasStamp(uint8_t address, char* unit, uint8_t unit_len, float min_value, float max_value, uint8_t num_fields_in_response) : 
 	_address(address),
 	_response_field_count(num_fields_in_response),
@@ -10,11 +10,12 @@ AtlasStamp::AtlasStamp(uint8_t address, char* unit, uint8_t unit_len, float min_
 	_async_comand_ready_by(0),
 	_min_value(min_value),
 	_max_value(max_value),
-	_unit{ (char*)malloc(sizeof(char) * unit_len) },
-	stamp_version{ '0','.','0','\0' }
+	_unit{ (char*)malloc(sizeof(char) * (unit_len+1)) },
+	stamp_version{ '0','.','0','\0' },
+	is_awake(true)
 {
 	//Inicialize the sensor unit
-	memcpy(_unit, unit, unit_len);
+	strcpy(_unit, unit);
 	_clean_buffer();
 }
 
@@ -517,4 +518,37 @@ bool AtlasStamp::led(bool state)
 		return true;
 	}
 	return false;
+}
+
+bool const AtlasStamp::sleep(void)
+{
+	//Send the command and wait for confirmation
+	if (ATLAS_SUCCESS_RESPONSE == _command("Sleep", 300))
+	{
+		is_awake = false;
+		return true;
+	}
+	return false;
+}
+
+bool const AtlasStamp::wakeup(void)
+{
+	//If already awake return true
+	if (is_awake)
+	{
+		return true;
+	}
+
+	//Send any command to wake up
+	if (ATLAS_SUCCESS_RESPONSE == _command("L,?", 150))
+	{
+		is_awake = true;
+		return true;
+	}
+	return false;
+}
+
+bool const AtlasStamp::sleeping(void) const
+{
+	return is_awake;
 }
