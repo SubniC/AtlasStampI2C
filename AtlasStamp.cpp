@@ -1,6 +1,5 @@
 #include "AtlasStamp.h"
 
-//TODO: Parametro unit_len deprecated? se peude cambiar en el malloc por strlen()?
 AtlasStamp::AtlasStamp(uint8_t address, char* unit, uint8_t unit_len, float min_value, float max_value, uint8_t max_num_fields_in_response) :
 	_address(address),
 	_max_response_field_count(max_num_fields_in_response),
@@ -15,15 +14,10 @@ AtlasStamp::AtlasStamp(uint8_t address, char* unit, uint8_t unit_len, float min_
 	stamp_version{ '0','.','0','\0' },
 	is_awake(true)
 {
-	//Inicialize the sensor unit
+	// Initialize the sensor unit.
 	strcpy(_unit, unit);
 	_clean_buffer();
 }
-
-//uint8_t AtlasStamp::raw_command(char* cmd, unsigned long timeout)
-//{
-//	return _raw_command(cmd, timeout);
-//}
 
 void AtlasStamp::_resize_response_count(uint8_t count)
 {
@@ -63,22 +57,19 @@ bool AtlasStamp::_command_async(char* cmd, unsigned long t)
 
 	if (wireres == I2C_RESPONSE_OK)
 	{
-		//The command was sent ok, so no more comunication can be done now
+		// Command sent ok, no more communication can happen until the result is read.
 		_is_busy = true;
-		//At this point we where supposed to have an answer from the sensor
-		//used to calculate if the result should be available
+		// Estimated time at which the result should be available.
 		_async_comand_ready_by = millis() + t;
 
-		//Reset the bufer and read counter
+		// Reset the buffer and read counter.
 		_clean_buffer();
 
 #ifdef ATLAS_DEBUG
 		Serial.printf("AtlasStamp::_command_async() [END] T[%d] BUSY[%d] READY_BY[%d] SUCCSED[%d] COMMAND[%s]\n", millis(), _is_busy, _async_comand_ready_by, wireres, cmd);
 #endif
-		//Si hemos procesado correctamente un comando y el cacharro estaba dormido se habra despertado,
-		//así que fijamos el flag, ojo, cuando lleguemos aqui despues de enviar el comando Sleep el flag
-		//se pondra a true, estando realmente dormido el modulo, pero no es problema, ya que al salir y
-		//volver a la funcion sleep() se pone a false
+		// Any processed command wakes the module, so flag it awake. After a Sleep
+		// command this is set true too, but sleep() resets it on return.
 		is_awake = true;
 		return true;
 	}
@@ -88,7 +79,7 @@ bool AtlasStamp::_command_async(char* cmd, unsigned long t)
 	}
 }
 
-//Obtiene el resultado de un comando asincrono
+// Retrieves the result of an asynchronous command.
 uint8_t AtlasStamp::_command_result()
 {
 	uint8_t tmp_char = 0;
@@ -107,51 +98,40 @@ uint8_t AtlasStamp::_command_result()
 		return ATLAS_BUSY_RESPONSE;
 	}
 
-	/*_clean_buffer();*/								//Limpiamos el buffer
-
-	//Nos aseguramos de que esta listo antes de seguir :)
+	// Make sure the module is ready before continuing.
 	while (_i2c_response_code == ATLAS_BUSY_RESPONSE) {
 		Wire.requestFrom(_address, (uint8_t)MAX_DATA_TO_READ);
-		_i2c_response_code = Wire.read();   
+		_i2c_response_code = Wire.read();
 		if (_i2c_response_code == ATLAS_BUSY_RESPONSE)
 		{
-			//Esto es necesario si no queremos que se cuelgue el i2c
-			//Tenemos que limpiar los datos del buffer antes de volver a usar el bus
+			// Drain the buffer before reusing the bus, otherwise I2C may hang.
 			_clean_wire();
 		}
 		delay(CONNECTION_DELAY_MS);
 	}
 
-	//OK, ha procesado el comando y la respuesta es correcta :)
-	//vamos a recuperar los datos
+	// Command processed successfully: read the data into the buffer.
 	if (_i2c_response_code == ATLAS_SUCCESS_RESPONSE)
 	{
-		//Mientras tengamos datos cargamos el buffer
 		while (Wire.available())
 		{
-			//Obtenemos el primer byte
 			tmp_char = Wire.read();
 
-			//Si el caracter es NULL es el final de la transmision
+			// A NULL character marks the end of the transmission.
 			if (tmp_char == NULL_CHARACTER)
 			{
-				//Añadimos el final de carro al buffer
 				_response_buffer[_i2c_bytes_received] = '\0';
-				//_i2c_bytes_received++;
-				//Terminamos
 				break;
 			}
 			else
 			{
-				//Guardamos ese jugoso caracter en nuestro array
-				_response_buffer[_i2c_bytes_received] = tmp_char;        //load this byte into our array.
+				_response_buffer[_i2c_bytes_received] = tmp_char;
 				_i2c_bytes_received++;
-				//TODO: Controlar aquí el buffer overflow!
 			}
 		}
 	}
 	_clean_wire();
-	//Volvemos a poner los flags en su sitio
+	// Reset the flags.
 	_is_busy = false;
 	_async_comand_ready_by = 0;
 
@@ -159,8 +139,7 @@ uint8_t AtlasStamp::_command_result()
 	Serial.printf("AtlasStamp::_command_result() [END] T[%d] BUSY[%d] CODE[%d] RESPONSE[%s] TIMEOUT[%d]\n", millis(), _is_busy, _i2c_response_code, _response_buffer, _async_comand_ready_by);
 #endif
 
-	//Devolvemos el codigo de respuesta :)
-	//Si es 1 tendremos _response_buffer cargado con la respuesta al comando
+	// Return the response code. On ATLAS_SUCCESS_RESPONSE the buffer holds the answer.
 	return _i2c_response_code;
 }
 
@@ -232,9 +211,8 @@ float* const AtlasStamp::result_async()
 
 float* const AtlasStamp::_parse_sensor_read(void)
 {
-	//Cuando llamamos a esta fucnion deberiamos tener en el _response_buffer una cadena 
-	//representando la medida del sensor, esta dependera, pudiendo ser, un float (58.7)
-	// o una lista de floats separada por comas (12.5,22.5,1.0,00.2)
+	// _response_buffer is expected to hold the sensor reading: either a single float
+	// (e.g. 58.7) or a comma-separated list of floats (e.g. 12.5,22.5,1.0,00.2).
 #ifdef ATLAS_DEBUG
 	Serial.printf("AtlasStamp::_parse_sensor_read() T[%lu] sensor fields [%d] response buffer [%s]\n", millis(), _response_field_count, _response_buffer);
 #endif
@@ -248,13 +226,11 @@ float* const AtlasStamp::_parse_sensor_read(void)
 			if (current_token != NULL)
 			{
 				*(_last_result+i) = atof(current_token);
-				//Get next value if previous was not null
 				current_token = strtok(NULL, ",");
 			}
 			else
 			{
-				//The sensor is suposed to have multiple values, but
-				//thats not true so set the value to default error
+				// Expected another value but none was present: use the error default.
 				*(_last_result + i) = -2048.0f;
 			}
 #ifdef ATLAS_DEBUG
@@ -270,7 +246,7 @@ float* const AtlasStamp::_parse_sensor_read(void)
 		}
 		else
 		{
-			//Is a simple sensor only a float string in the buffer, just set it.
+			// Single-value sensor: the buffer holds just one float string.
 			*_last_result = atof(_response_buffer);
 		}
 
@@ -284,53 +260,44 @@ float* const AtlasStamp::_parse_sensor_read(void)
 bool AtlasStamp::_stamp_connected()
 {
 	bool r = false;
-	//If we are already inicialized return true
+	// Already initialized.
 	if (_is_init) { return true; }
 
-	//Temporary set the flag to allow the initial contact
-	//otherways the _command() function wont return ATLAS_SUCCESS_RESPONSE
+	// Temporarily set the flag so _command() can return ATLAS_SUCCESS_RESPONSE
+	// during the initial contact.
 	_is_init = true;
 
 	for (int i = 0; i < MAX_CONNECTION_TRIES; i++)
 	{
-		//Try to get the status of the device
+		// Try to get the device status.
 		if (ATLAS_SUCCESS_RESPONSE == _command(ATLAS_INFO_COMAND,300))
 		{
-			//Is an EZO module
+			// EZO modules reply with "?I...".
 			if (_response_buffer[0] == '?' && _response_buffer[1] == 'I')
 			{
-				//comeback with good news
 				r = true;
 				break;
 			}
 		}
 		delay(CONNECTION_DELAY_MS);
 	}
-	//Clear the flag, is the child class the one that should set it
-	//when more info about the module is parsed
+	// Clear the flag; the child class sets it once the module info is parsed.
 	_is_init = false;
-	//Return r, it contains true if we could stablish communication 
-	//with an EZO module in the given address
+	// r is true if we reached an EZO module at the given address.
 	return r;
 }
 
 void AtlasStamp::purge()
 {
-	//TODO: deberia esperar a que termine lo que este haciendo si
-	//hay trabajo a medio?
 	_is_busy = false;
 	_async_comand_ready_by = 0;
 }
 
 float AtlasStamp::get_vcc(void)
 {
-	//float returnVal = -2048.0f;
 	if (ATLAS_SUCCESS_RESPONSE == _command("Status", 200))
 	{
-		//?|S|T|A|T|U|S|,|P|,|5|.|0|6|4|NULL
-		//TODO: Deberiamos proteger estas lecturas con punteros con algo del tipo? if (_bytes_in_buffer() >= 10) {...}
-		//En este caso el atof mirara los bytes que considere y si el resultado no es correcto devolvera 0.0f asi que por ahí no parece
-		//haber problemas, ademas no deberia pasar ya que si command() devuelve exito, deberia estar cargado el buffer...
+		// Response layout: ?|S|T|A|T|U|S|,|P|,|5|.|0|6|4|NULL
 		if (_bytes_in_buffer() >= 13)
 		{
 			char* res_buff = (char*)(_get_response_buffer() + 10);
@@ -351,10 +318,7 @@ bool AtlasStamp::led()
 {
 	if (ATLAS_SUCCESS_RESPONSE == _command("L,?", 150))
 	{
-		//Una vez qui tenemos en el bufer algo asi (las | separan, no cuentan como caracter en el buffer)
-		// ? | L | , | 1 | null
-		// ? | L | , | 0 | null
-		//Comporbamos que la posicion 3 del buffer sea un 0 o un 1
+		// Buffer holds "?L,1" or "?L,0"; position 3 is the state.
 		if (_read_buffer(3) == '1')
 		{
 			return true;
@@ -365,12 +329,8 @@ bool AtlasStamp::led()
 
 bool AtlasStamp::led(bool state)
 {
-	//El comando de fijar el led es:
-	// L,1 para activar
-	// ó 
-	// L,0 para desactivar
+	// "L,1" turns the LED on, "L,0" turns it off.
 	sprintf(_command_buffer,"L,%d", state);
-	//Send the command and wait for confirmation
 	if (ATLAS_SUCCESS_RESPONSE == _command(_command_buffer, 300))
 	{
 		return true;
@@ -380,7 +340,6 @@ bool AtlasStamp::led(bool state)
 
 bool const AtlasStamp::sleep(void)
 {
-	//Send the command and wait for confirmation
 	if (ATLAS_SUCCESS_RESPONSE == _command("Sleep", 300))
 	{
 		is_awake = false;
@@ -389,11 +348,10 @@ bool const AtlasStamp::sleep(void)
 	return false;
 }
 
-//Not necesary because if the module is sleeping will wake up with any command,
-//but I use it to keep the API clean (sleep()/sleeping()/wakeup()) 
+// Not strictly necessary (any command wakes a sleeping module), but kept to keep
+// the API clean: sleep() / sleeping() / wakeup().
 bool const AtlasStamp::wakeup(void)
 {
-	//If already awake return true
 	if (is_awake)
 	{
 		return true;

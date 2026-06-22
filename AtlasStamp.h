@@ -39,44 +39,33 @@
 // DO EZO  -> '?I,D.O.,1.0' || '?I,DO,1.7' (-> exists in D.O. and DO form)
 // EC EZO  -> '?I,EC,1.0 '
 
-// Legazy PH  -> 'P,V5.0,5/13'
-// Legazy ORP -> 'O,V4.4,2/13'
-// Legazy DO  -> 'D,V5.0,1/13'
-// Legazy EC  -> 'E,V3.1,5/13'
+// Legacy PH  -> 'P,V5.0,5/13'
+// Legacy ORP -> 'O,V4.4,2/13'
+// Legacy DO  -> 'D,V5.0,1/13'
+// Legacy EC  -> 'E,V3.1,5/13'
 
 #define ATLAS_INFO_COMAND "I"
 #define ATLAS_READ_COMAND "R"
 
-//http://gcc.gnu.org/onlinedocs/gcc-4.9.4/gcc/Inline.html
-//TODO: terminar de implementar API de atlas
-//TODO: destructores
-//TODO: un perfilador basico apra saber loq ue tarda realmente en una peticion asincrona (iniciarla + recuperar el valor)
 class AtlasStamp
 {
 public:
-	//Constructor and destructor
 	explicit AtlasStamp(uint8_t, char*, uint8_t, float, float, uint8_t=1);
-	//virtual ~AtlasStamp() {};
 
-	//Atlas API
-	//bool calibrate(void);
-	//bool factoryReset(void);
 	float get_vcc(void);
 
 	virtual void info(Stream&);
 
 	bool led();
 	bool led(bool);
-	//bool protocolLock();
-	//bool protocolLock(bool);
-	
+
 	bool const sleep(void);
 	bool const wakeup(void);
 	inline bool const sleeping(void) const __attribute__((always_inline)){ return !is_awake; }
 	
 	//Get the device address
 	inline  uint8_t const address() const __attribute__((always_inline)) { return _address; }
-	//True if the sensor is inicialized
+	//True if the sensor is initialized
 	inline  bool const ready() const __attribute__((always_inline)) { return _is_init; }
 	//Async reading synchronization
 	//True if is taking and async read
@@ -110,25 +99,18 @@ public:
 	
 	void purge(); //Cleans the internal object buffers and state to READY
 
-	//Virtual methods, not using pure virtual here to optimize program memory with pic32 compiler
-	//more here: http://chipkit.net/efficient-cplus-plus/
-	//http://www.learncpp.com/cpp-tutorial/126-pure-virtual-functions-abstract-base-classes-and-interface-classes/
-	//TODO: Esto podria tener una implementacion basica como la que hay en ORP, asi no 
-	//tendriamos que implementarlo en la base.
+	// Virtual (not pure virtual) to keep program memory low on the pic32 compiler.
 	virtual bool const begin(void) { while (1); }
-	
+
 	float* const read(void);
 	bool const read_async(void);
 	float* const result_async(void);
-	//La verison ascii es 22us mas rapida que la version float en sincrono con el modulo de ec
+	// The ascii version is slightly faster than the float version in sync mode.
 	uint8_t read_ascii(char*);
 	uint8_t result_ascii_async(char*);
 
 	inline uint8_t const response_count(void) const { return _response_field_count; }
 protected:
-	//TODO: Esto no es igual en todas las clases? solo para sacar la version? no se podria hacer en la conexion?
-	//y eliminamos esta fucnion de las clases derivadas? ademas eso permitira crear objetos "base" AtlasStamp compatibles
-	//con cualquier modulo o no?
 	virtual bool const _stamp_ready(void) { while (1); };
 	
 	float* const _parse_sensor_read(void);
@@ -164,7 +146,7 @@ protected:
 	uint8_t _address;
 	char stamp_version[5];
 
-	//Inicialization require part of the work here and part in child class so we need the flag protected	
+	//Initialization is split between this class and the child class, so the flag is protected.
 	bool _is_init;
 
 	void _resize_response_count(uint8_t = 1);
@@ -186,8 +168,8 @@ private:
 	const float _min_value;
 	unsigned long _async_comand_ready_by;
 	
-	uint8_t _response_field_count; //TODO: no tocar directamente solo por medio del constructor o la funcion _resize_response_count()
-	const uint8_t _max_response_field_count; //Maximo numero de campos de respuesta que puede tener el sensor
+	uint8_t _response_field_count; // Only change through the constructor or _resize_response_count().
+	const uint8_t _max_response_field_count; // Max number of response fields the sensor can return.
 
 	inline void _clean_wire() __attribute__((always_inline)) { while (Wire.available()) { Wire.read(); } }
 };

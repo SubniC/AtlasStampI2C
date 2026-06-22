@@ -1,7 +1,3 @@
-// 
-// 
-// 
-
 #include "AtlasStampEC.h"
 
 AtlasStampEc::AtlasStampEc(byte address) :
@@ -11,7 +7,6 @@ AtlasStampEc::AtlasStampEc(byte address) :
 }
 
 
-//https://www.learncpp.com/cpp-tutorial/3-8a-bit-flags-and-bit-masks/
 bool const AtlasStampEc::set_output_parameter(Parameters type, bool value)
 {
 	if (static_cast<bool>(_parameter_state & type) == value)
@@ -51,7 +46,7 @@ bool const AtlasStampEc::set_output_parameter(Parameters type, bool value)
 
 bool const AtlasStampEc::get_output_parameter(Parameters type)
 {
-	//Needs the module to be inicialized
+	// Requires the module to be initialized.
 	return _parameter_state & type;
 }
 
@@ -74,7 +69,6 @@ bool const AtlasStampEc::_load_parameters()
 			}
 			else
 			{
-				//http://www.cplusplus.com/reference/cstring/strtok/?kw=strtok
 				char *current_token;
 				current_token = strtok(res_buff, ",");
 				uint8_t _new_count = 0;
@@ -136,7 +130,7 @@ void AtlasStampEc::info(Stream& output)
 
 bool const AtlasStampEc::begin()
 {
-	//Inicialize sensor information
+	// Initialize sensor information.
 	if (_stamp_ready())
 	{
 		//Load module output parameters

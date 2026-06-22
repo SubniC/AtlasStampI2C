@@ -21,8 +21,7 @@ bool const AtlasStampTemperatureCompensated::_load_temperature()
 {	
 	if (ATLAS_SUCCESS_RESPONSE == _command(ATLAS_TEMPERATURE_READ_COMAND, 300))
 	{
-		//En el buffer tendremos:
-		// ? | T | , | 1 | 9 | . | 5 | null
+		// Buffer holds "?T,19.5".
 		if (_bytes_in_buffer() >= 5)
 		{
 			char* res_buff = (char*)(_get_response_buffer() + 3);
@@ -40,7 +39,6 @@ bool const AtlasStampTemperatureCompensated::_load_temperature()
 
 bool const  AtlasStampTemperatureCompensated::set_temperature(float temp, float max_divergence)
 {
-	//Serial.printf("temp[%4.2f] _current_temperature[%4.2f] max_divergence[%4.2f]\n", temp, _current_temperature, max_divergence);
 	if ((!busy()) && (abs(temp - _current_temperature) >= max_divergence))
 	{
 		return set_temperature(temp);
@@ -50,10 +48,9 @@ bool const  AtlasStampTemperatureCompensated::set_temperature(float temp, float 
 
 bool const AtlasStampTemperatureCompensated::set_temperature(float temp)
 {
-	sprintf(_command_buffer, "T,%4.2f", temp);	
+	sprintf(_command_buffer, "T,%4.2f", temp);
 	if (ATLAS_SUCCESS_RESPONSE == _command(_command_buffer, 300))
 	{
-		//TODO: Query the temperature to validate the change?
 		_current_temperature = temp;
 		return true;
 	}

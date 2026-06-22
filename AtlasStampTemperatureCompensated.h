@@ -17,10 +17,8 @@
 class AtlasStampTemperatureCompensated : public AtlasStamp
 {
 public:
-	//CONS/DES
 	explicit AtlasStampTemperatureCompensated (uint8_t, char*, uint8_t, float, float, uint8_t = 1);
-	
-	//BASE
+
 	void info(Stream&);
 
 	//Temperature API	

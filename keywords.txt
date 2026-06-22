@@ -1,0 +1,57 @@
+#########################################
+# Syntax Coloring Map For AtlasStampI2C
+#########################################
+
+#########################################
+# Datatypes (KEYWORD1)
+#########################################
+
+AtlasStamp	KEYWORD1
+AtlasStampTemperatureCompensated	KEYWORD1
+AtlasStampPh	KEYWORD1
+AtlasStampDo	KEYWORD1
+AtlasStampOrp	KEYWORD1
+AtlasStampEc	KEYWORD1
+
+#########################################
+# Methods and Functions (KEYWORD2)
+#########################################
+
+begin	KEYWORD2
+read	KEYWORD2
+read_async	KEYWORD2
+result_async	KEYWORD2
+read_ascii	KEYWORD2
+result_ascii_async	KEYWORD2
+available	KEYWORD2
+ready	KEYWORD2
+busy	KEYWORD2
+purge	KEYWORD2
+address	KEYWORD2
+info	KEYWORD2
+get_unit	KEYWORD2
+get_min_value	KEYWORD2
+get_max_value	KEYWORD2
+get_vcc	KEYWORD2
+response_count	KEYWORD2
+led	KEYWORD2
+sleep	KEYWORD2
+wakeup	KEYWORD2
+sleeping	KEYWORD2
+set_temperature	KEYWORD2
+get_temperature	KEYWORD2
+set_pressure	KEYWORD2
+get_pressure	KEYWORD2
+set_salinity	KEYWORD2
+get_salinity	KEYWORD2
+set_k	KEYWORD2
+get_k	KEYWORD2
+set_output_parameter	KEYWORD2
+get_output_parameter	KEYWORD2
+
+#########################################
+# Constants (LITERAL1)
+#########################################
+
+ATLAS_SALINITY_UNIT_US	LITERAL1
+ATLAS_SALINITY_UNIT_PPT	LITERAL1

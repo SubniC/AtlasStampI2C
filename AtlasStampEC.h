@@ -15,13 +15,7 @@
 #define ATLAS_DEBUG_EC
 #endif
 
-//TODO: En funcion de los parametros que tengmaos activos para la salida deberiamos cal
-//cular el el valor de _response_field_count ojo que cuando cambie tendremos que "reasignar" 
-//la memoria para los resultados que se reserva en el constructor
-
-//TODO: Falta optimizar las funciones antiguas de set/get_k
-
-//DATASHEET: https://www.atlas-scientific.com/_files/_datasheets/_circuit/ec_EZO_datasheet.pdf
+// Datasheet: ec_EZO_datasheet (atlas-scientific.com)
 class AtlasStampEc : public AtlasStampTemperatureCompensated
 {
 public:
@@ -36,8 +30,6 @@ public:
 
 	bool const begin(void);
 	void info(Stream&);
-	//TODO: Guardar localmente la ultima K recuperada/fijada
-	//que no tengamos que preguntarle al stamp cada vez
 	bool set_k(float);
 	float get_k(void);
 	

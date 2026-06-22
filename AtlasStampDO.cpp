@@ -1,7 +1,3 @@
-// 
-// 
-// 
-
 #include "AtlasStampDO.h"
 
 AtlasStampDo::AtlasStampDo(byte address) :
@@ -18,10 +14,10 @@ void AtlasStampDo::info(Stream& output)
 
 bool const AtlasStampDo::begin()
 {
-	//Module inicialization and data sync
+	// Module initialization and data sync.
 	if (_stamp_ready())
 	{
-		//Recover temperature, presure and salinity parameters from the module
+		// Recover temperature, pressure and salinity parameters from the module.
 		_load_temperature();
 		_load_pressure();
 		_load_salinity();
@@ -34,9 +30,8 @@ bool const AtlasStampDo::begin()
 bool const AtlasStampDo::_stamp_ready()
 {
 	_is_init = false;
-	//El padre controla que este coenctado un dispositivo en la direccion
-	//y que sea un EZO, ya de paso carga _buffer con los datos del comando
-	//INFO asi que sacamos y asignamos la version del sensor :)
+	// The base class checks that an EZO device answers at the address and loads the
+	// INFO response into the buffer; here we parse and store the module version.
 	if (_stamp_connected())
 	{
 		// DO EZO  -> '?I,D.O.,1.0' || '?I,DO,1.7' (-> exists in D.O. and DO form)
@@ -72,10 +67,7 @@ bool const AtlasStampDo::_load_salinity()
 {
 	if (ATLAS_SUCCESS_RESPONSE == _command("S,?", 300))
 	{
-		//En el buffer tendremos:
-		// ? | S | , | 50000 | , | uS | null
-		// o
-		// ? | S | , | 37.5 | , | ppt | null
+		// Buffer holds either "?S,50000,uS" or "?S,37.5,ppt".
 		byte byteFromBuffer = 0;
 		for (int i = 3; i < _bytes_in_buffer(); i++)
 		{
@@ -117,16 +109,13 @@ bool const AtlasStampDo::set_salinity(float value, byte unit)
 	{
 		sprintf(_command_buffer, "S,%d", (int)value);
 	}
-	//Generamos el comando
 	if (_command(_command_buffer, 300))
 	{
-		//TODO: Verificar pidiendo el valor?
 		_current_salinity = value;
 		return true;
 	}
 	return false;
 }
-
 
 
 float const AtlasStampDo::get_pressure()
@@ -138,8 +127,7 @@ bool const AtlasStampDo::_load_pressure()
 {
 	if (ATLAS_SUCCESS_RESPONSE == _command("P,?", 300))
 	{
-		//En el buffer tendremos:
-		// ? | P | , | 9 | 0 | . | 2 | 5 | null
+		// Buffer holds "?P,90.25".
 		if (_bytes_in_buffer() >= 6)
 		{
 			char* res_buff = (char*)(_get_response_buffer() + 3);
@@ -165,12 +153,9 @@ bool const AtlasStampDo::set_pressure(float value, float max_divergence)
 
 bool const AtlasStampDo::set_pressure(float value)
 {
-	//Guardamos el numero en el buffer
 	sprintf(_command_buffer, "P,%4.2f", value);
-	//Generamos el comando
 	if (_command(_command_buffer, 300))
 	{
-		//TODO: Verificar pidiendo el valor?
 		_current_pressure = value;
 		return true;
 	}

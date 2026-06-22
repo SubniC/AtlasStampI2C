@@ -15,20 +15,12 @@
 	#define ATLAS_DEBUG_PH
 #endif
 
-//TODO: Falta emtodo info()
 class AtlasStampPh : public AtlasStampTemperatureCompensated
 {
 public:
-	//CONS/DES
 	explicit AtlasStampPh(uint8_t);
-	
-	//BASE
+
 	bool const begin(void);
-
-	//PH
-	//TODO: Implementar
-	float* slope(void);
-
 
 private:
 	bool const _stamp_ready(void);

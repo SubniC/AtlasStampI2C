@@ -18,29 +18,21 @@
 #define ATLAS_SALINITY_UNIT_US 1
 #define ATLAS_SALINITY_UNIT_PPT 2
 
-//TODO: Actualizar metodos antiguos
-
-
-//https://www.atlas-scientific.com/_files/_datasheets/_circuit/DO_EZO_Datasheet_bw.pdf
+// Datasheet: DO_EZO_Datasheet (atlas-scientific.com)
 class AtlasStampDo : public AtlasStampTemperatureCompensated
 {
 public:
 	explicit AtlasStampDo(byte);
-	
-	//VIRTUAL BASE
+
 	bool const begin(void);
 	void info(Stream&);
 
-	//Segun la hoja de caraceristicas la presion se puede omitir
-	//si la sonda va a estar a menos de 10m de profundidad
-	//pagina 50
+	// Per the datasheet, pressure can be omitted for probes shallower than 10 m.
 	bool const set_pressure(float,float);
 	bool const set_pressure(float);
 	float const get_pressure();
 
-	//Segun la hoja de caraceristicas la salinida es irrelevante
-	//si la conductividad es menor de 2500uS
-	//Pagina 49
+	// Per the datasheet, salinity is irrelevant when conductivity is below 2500 uS.
 	bool const set_salinity(float, byte, float);
 	bool const set_salinity(float, byte);
 	float const get_salinity();

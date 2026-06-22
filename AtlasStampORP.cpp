@@ -1,36 +1,26 @@
-// 
-// 
-// 
-
 #include "AtlasStampORP.h"
 
-AtlasStampOrp::AtlasStampOrp(byte address) : 
+AtlasStampOrp::AtlasStampOrp(byte address) :
 	AtlasStamp(address, "mV", 2, -1019.9f, 1019.9f)
-
 {
-	//https://www.atlas-scientific.com/_files/_datasheets/_circuit/ORP_EZO_datasheet.pdf
 }
 
 bool const AtlasStampOrp::begin()
 {
-	//Inicialzamos el sensor
-	return  _stamp_ready();
+	return _stamp_ready();
 }
 
 bool const AtlasStampOrp::_stamp_ready()
 {
 	_is_init = false;
-	//El padre controla que este coenctado un dispositivo en la direccion
-	//y que sea un EZO, ya de paso carga _buffer con los datos del comando
-	//INFO asi que sacamos y asignamos la version del sensor :)
+	// The base class checks that an EZO device answers at the address and loads the
+	// INFO response into the buffer; here we parse and store the module version.
 	if (_stamp_connected())
 	{
-		// ORP EZO -> '?I,OR,1.0'   (-> wrong in documentation 'OR' instead of 'ORP')
-		//Comprobamos si es nuestro tipo de sensor :)
+		// ORP EZO -> '?I,OR,1.0' (the datasheet wrongly shows 'OR' instead of 'ORP').
 		if (_read_buffer(3) == 'O' && _read_buffer(4) == 'R')
 		{
-			//No sabemos si llega OR o ORP, de ehcho a mi me llega ORP con el mio
-			//asi que nos curamos en salud
+			// Modules may report either 'OR' or 'ORP', so handle both.
 			if (_read_buffer(5) == 'P')
 			{
 				stamp_version[0] = _read_buffer(7);
